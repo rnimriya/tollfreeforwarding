@@ -1,0 +1,90 @@
+// This is your Prisma schema file
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id               String          @id @default(uuid())
+  email            String          @unique
+  passwordHash     String          @map("password_hash")
+  firstName        String          @map("first_name")
+  lastName         String          @map("last_name")
+  plan             String          @default("STARTER")
+  createdAt        DateTime        @default(now()) @map("created_at")
+  updatedAt        DateTime        @updatedAt @map("updated_at")
+
+  virtualNumbers   VirtualNumber[]
+  callLogs         CallLog[]
+
+  @@map("users")
+}
+
+model VirtualNumber {
+  id                String        @id @default(uuid())
+  userId            String        @map("user_id")
+  e164Number        String        @unique @map("e164_number")
+  friendlyName      String?       @map("friendly_name")
+  countryCode       String        @map("country_code")
+  numberType        String        @default("LOCAL") @map("number_type")
+  status            String        @default("ACTIVE")
+  timezone          String        @default("America/New_York")
+  voicemailGreeting String?       @map("voicemail_greeting")
+  ivrEnabled        Boolean       @default(false) @map("ivr_enabled")
+  ivrFlow           String?       @map("ivr_flow")
+  createdAt         DateTime      @default(now()) @map("created_at")
+  updatedAt         DateTime      @updatedAt @map("updated_at")
+
+  user              User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  routingRules      RoutingRule[]
+  callLogs          CallLog[]
+
+  @@map("virtual_numbers")
+}
+
+model RoutingRule {
+  id              String        @id @default(uuid())
+  virtualNumberId String        @map("virtual_number_id")
+  priority        Int           @default(0)
+  label           String        @default("Rule")
+  activeDays      String        @default("1,2,3,4,5") @map("active_days")
+  openTime        String?       @map("open_time")
+  closeTime       String?       @map("close_time")
+  action          String        @default("FORWARD_PSTN")
+  destinations    String        @default("[]")
+  ringStrategy    String        @default("SEQUENTIAL") @map("ring_strategy")
+  ringTimeout     Int           @default(30) @map("ring_timeout")
+  sipUri          String?       @map("sip_uri")
+  ivrNodeKey      String?       @map("ivr_node_key")
+  createdAt       DateTime      @default(now()) @map("created_at")
+  updatedAt       DateTime      @updatedAt @map("updated_at")
+
+  virtualNumber   VirtualNumber @relation(fields: [virtualNumberId], references: [id], onDelete: Cascade)
+
+  @@map("routing_rules")
+}
+
+model CallLog {
+  id              String        @id @default(uuid())
+  virtualNumberId String        @map("virtual_number_id")
+  userId          String        @map("user_id")
+  providerCallSid String?       @map("provider_call_sid")
+  direction       String        @default("INBOUND")
+  callerNumber    String        @map("caller_number")
+  calledNumber    String        @map("called_number")
+  forwardedTo     String?       @map("forwarded_to")
+  status          String        @default("COMPLETED")
+  duration        Int?
+  routingRuleId   String?       @map("routing_rule_id")
+  startedAt       DateTime      @default(now()) @map("started_at")
+  endedAt         DateTime?     @map("ended_at")
+
+  virtualNumber   VirtualNumber @relation(fields: [virtualNumberId], references: [id])
+  user            User          @relation(fields: [userId], references: [id])
+
+  @@map("call_logs")
+}

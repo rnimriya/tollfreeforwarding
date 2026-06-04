@@ -1,0 +1,40 @@
+import { Routes, Route, Navigate } from 'react-router-dom';
+import { useAuth } from './stores/authStore';
+import AppLayout from './components/AppLayout';
+import LoginPage from './pages/LoginPage';
+import RegisterPage from './pages/RegisterPage';
+import DashboardPage from './pages/DashboardPage';
+import NumbersPage from './pages/NumbersPage';
+import NumberDetailPage from './pages/NumberDetailPage';
+import CallLogsPage from './pages/CallLogsPage';
+import IVRBuilderPage from './pages/IVRBuilderPage';
+import LandingPage from './pages/LandingPage';
+
+function RequireAuth({ children }: { children: React.ReactNode }) {
+  const { token } = useAuth();
+  return token ? <>{children}</> : <Navigate to="/login" replace />;
+}
+
+export default function App() {
+  return (
+    <Routes>
+      <Route path="/" element={<LandingPage />} />
+      <Route path="/login" element={<LoginPage />} />
+      <Route path="/register" element={<RegisterPage />} />
+      <Route
+        element={
+          <RequireAuth>
+            <AppLayout />
+          </RequireAuth>
+        }
+      >
+        <Route path="/dashboard" element={<DashboardPage />} />
+        <Route path="/numbers" element={<NumbersPage />} />
+        <Route path="/numbers/:id" element={<NumberDetailPage />} />
+        <Route path="/numbers/:id/ivr" element={<IVRBuilderPage />} />
+        <Route path="/logs" element={<CallLogsPage />} />
+      </Route>
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
+  );
+}
