@@ -6,6 +6,7 @@ web_modules/
 
 # Build/Dist outputs
 dist/
+public/
 tmp/
 build/
 .cache/
