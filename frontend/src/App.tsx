@@ -13,6 +13,7 @@ import NumberDetailPage from './pages/NumberDetailPage';
 import CallLogsPage from './pages/CallLogsPage';
 import IVRBuilderPage from './pages/IVRBuilderPage';
 import LandingPage from './pages/LandingPage';
+import LinksPage from './pages/LinksPage';
 
 function RequireAuth({ children }: { children: React.ReactNode }) {
   const { token } = useAuth();
@@ -28,6 +29,7 @@ export default function App() {
   return (
     <Routes>
       <Route path="/" element={<LandingPage />} />
+      <Route path="/links" element={<LinksPage />} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
       <Route path="/forgot-password" element={<ForgotPasswordPage />} />
