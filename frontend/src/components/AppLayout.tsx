@@ -1,6 +1,7 @@
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Phone, List, Workflow, LogOut, Settings, Zap } from 'lucide-react';
+import { LayoutDashboard, Phone, List, LogOut, Zap, Sun, Moon } from 'lucide-react';
 import { useAuth } from '../stores/authStore';
+import { useTheme } from '../stores/themeStore';
 
 const navItems = [
   { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
@@ -10,6 +11,7 @@ const navItems = [
 
 export default function AppLayout() {
   const { user, logout } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
 
   const handleLogout = () => {
@@ -46,10 +48,21 @@ export default function AppLayout() {
             </div>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.35rem 0.5rem', borderRadius: 'var(--radius-sm)', background: 'var(--accent-dim)', marginBottom: '0.5rem' }}>
-            <Zap size={12} color="var(--accent)" />
-            <span style={{ fontSize: '0.72rem', fontWeight: 600, color: 'var(--accent)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{user?.plan}</span>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.5rem', padding: '0.35rem 0.5rem', borderRadius: 'var(--radius-sm)', background: 'var(--accent-dim)', marginBottom: '0.75rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+              <Zap size={12} color="var(--accent)" />
+              <span style={{ fontSize: '0.72rem', fontWeight: 600, color: 'var(--accent)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{user?.plan}</span>
+            </div>
           </div>
+
+          <button
+            className="nav-item"
+            onClick={toggleTheme}
+            style={{ width: '100%', borderRadius: 'var(--radius-md)', marginBottom: '0.5rem', border: '1px solid var(--border)' }}
+          >
+            {theme === 'dark' ? <Sun size={15} /> : <Moon size={15} />}
+            <span>{theme === 'dark' ? 'Light Mode' : 'Dark Mode'}</span>
+          </button>
 
           <button className="nav-item" onClick={handleLogout} style={{ width: '100%', borderRadius: 'var(--radius-md)', color: 'var(--danger)' }}>
             <LogOut size={16} />

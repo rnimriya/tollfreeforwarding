@@ -11,6 +11,7 @@ import { ArrowLeft, Save, Plus, Mic, Menu, GitBranch, PhoneForwarded, Voicemail,
 import api from '../lib/api';
 import toast from 'react-hot-toast';
 import { v4 as uuid } from 'uuid';
+import { useTheme } from '../stores/themeStore';
 
 // ─── Node type config ──────────────────────────────────────────────────────────
 const NODE_TYPES_CONFIG = [
@@ -139,6 +140,7 @@ function NodeConfigPanel({ node, onChange, onDelete }: { node: Node; onChange: (
 // ─── Main Page ─────────────────────────────────────────────────────────────────
 export default function IVRBuilderPage() {
   const { id } = useParams<{ id: string }>();
+  const { theme } = useTheme();
   const navigate = useNavigate();
   const qc = useQueryClient();
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
@@ -295,7 +297,7 @@ export default function IVRBuilderPage() {
             fitView
             proOptions={{ hideAttribution: true }}
           >
-            <Background variant={BackgroundVariant.Dots} gap={20} size={1} color="rgba(255,255,255,0.04)" />
+            <Background variant={BackgroundVariant.Dots} gap={20} size={1} color={theme === 'dark' ? 'rgba(255, 255, 255, 0.04)' : 'rgba(0, 0, 0, 0.06)'} />
             <Controls />
             <MiniMap
               nodeColor={(n: Node) => {

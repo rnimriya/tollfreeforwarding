@@ -20,6 +20,27 @@
   overflow-x: hidden;
 }
 
+[data-theme='light'] .landing {
+  --lp-bg:        #f8fafc;
+  --lp-surface:   #ffffff;
+  --lp-elevated:  #f1f5f9;
+  --lp-border:    rgba(0, 0, 0, 0.08);
+  --lp-text:      #0f172a;
+  --lp-secondary: #475569;
+  --lp-muted:     #94a3b8;
+  --lp-accent:    #4f46e5;
+  --lp-accent2:   #7c3aed;
+  --lp-accent3:   #0284c7;
+}
+
+[data-theme='light'] .lp-nav.scrolled {
+  background: rgba(248, 250, 252, 0.85);
+}
+
+[data-theme='light'] .lp-mockup-card {
+  box-shadow: 0 24px 80px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.02);
+}
+
 /* ── Shared ──────────────────────────────────────────────────────── */
 .lp-container {
   max-width: 1160px;

@@ -5,8 +5,10 @@ import {
   ChevronRight, Check, Star, ArrowRight, Play,
   Clock, Users, TrendingUp, Headphones, Layers, RefreshCw,
   PhoneCall, MapPin, Mail, Twitter, Github, Linkedin,
+  Sun, Moon
 } from 'lucide-react';
 import { useAuth } from '../stores/authStore';
+import { useTheme } from '../stores/themeStore';
 import './LandingPage.css';
 
 // ── Animated counter hook ────────────────────────────────────────────
@@ -104,6 +106,7 @@ const faqs = [
 // ── Main Component ────────────────────────────────────────────────────
 export default function LandingPage() {
   const { token } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const statsRef = useInView(0.3);
   const callsCount = useCounter(2_400_000, 2500, statsRef.inView);
   const countriesCount = useCounter(60, 1800, statsRef.inView);
@@ -132,7 +135,23 @@ export default function LandingPage() {
             <a href="#pricing">Pricing</a>
             <a href="#faq">FAQ</a>
           </div>
-          <div className="lp-nav-cta">
+          <div className="lp-nav-cta" style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+            <button
+              onClick={toggleTheme}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: '0.5rem',
+                borderRadius: '8px',
+                border: '1px solid var(--lp-border)',
+                background: 'rgba(255, 255, 255, 0.05)',
+                color: 'var(--lp-text)',
+                cursor: 'pointer'
+              }}
+            >
+              {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
+            </button>
             {token ? (
               <Link to="/dashboard" className="lp-btn-primary">Go to Dashboard</Link>
             ) : (
