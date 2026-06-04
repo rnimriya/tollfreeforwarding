@@ -1,0 +1,21 @@
+{
+  "version": 2,
+  "rewrites": [
+    {
+      "source": "/api/:path*",
+      "destination": "https://tollfreeforwarding-backend.vercel.app/api/:path*"
+    },
+    {
+      "source": "/webhook/:path*",
+      "destination": "https://tollfreeforwarding-backend.vercel.app/webhook/:path*"
+    },
+    {
+      "source": "/health",
+      "destination": "https://tollfreeforwarding-backend.vercel.app/health"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}
