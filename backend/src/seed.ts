@@ -20,17 +20,78 @@ async function seed() {
   });
   console.log(`✅ User: ${user.email}`);
 
+  const supportIvrFlow = {
+    nodes: [
+      {
+        id: 'root',
+        type: 'ivr',
+        position: { x: 250, y: 50 },
+        data: { kind: 'greeting', label: 'Welcome Greeting', prompt: 'Welcome to our Support line. Please choose from the options.' }
+      },
+      {
+        id: 'menu1',
+        type: 'ivr',
+        position: { x: 250, y: 180 },
+        data: { kind: 'menu', label: 'Main Menu', prompt: 'Press 1 for Tech Support, or press 2 to leave a message.', timeout: 5 }
+      },
+      {
+        id: 'forward1',
+        type: 'ivr',
+        position: { x: 100, y: 320 },
+        data: { kind: 'forward', label: 'Tech Support Staff', value: '+15551234567', ringTimeout: 30 }
+      },
+      {
+        id: 'voicemail1',
+        type: 'ivr',
+        position: { x: 400, y: 320 },
+        data: { kind: 'voicemail', label: 'Voicemail Box', prompt: 'Please leave a message after the tone.' }
+      }
+    ],
+    edges: [
+      {
+        id: 'e-root-menu1',
+        source: 'root',
+        target: 'menu1',
+        animated: true,
+        style: { stroke: 'var(--accent)', strokeWidth: 2 }
+      },
+      {
+        id: 'e-menu1-forward1',
+        source: 'menu1',
+        target: 'forward1',
+        sourceHandle: null,
+        targetHandle: null,
+        label: 'Option 1',
+        animated: true,
+        style: { stroke: 'var(--accent)', strokeWidth: 2 }
+      },
+      {
+        id: 'e-menu1-voicemail1',
+        source: 'menu1',
+        target: 'voicemail1',
+        sourceHandle: null,
+        targetHandle: null,
+        label: 'Option 2',
+        animated: true,
+        style: { stroke: 'var(--accent)', strokeWidth: 2 }
+      }
+    ]
+  };
+
   // Create 3 virtual numbers
   const numbers = [
-    { e164Number: '+18005550100', friendlyName: 'Sales Line', numberType: 'TOLL_FREE', timezone: 'America/New_York' },
-    { e164Number: '+14155550199', friendlyName: 'Support Line', numberType: 'LOCAL', timezone: 'America/Los_Angeles' },
-    { e164Number: '+13125550110', friendlyName: 'Chicago Office', numberType: 'LOCAL', timezone: 'America/Chicago' },
+    { e164Number: '+18005550100', friendlyName: 'Sales Line', numberType: 'TOLL_FREE', timezone: 'America/New_York', ivrEnabled: false, ivrFlow: null },
+    { e164Number: '+14155550199', friendlyName: 'Support Line', numberType: 'LOCAL', timezone: 'America/Los_Angeles', ivrEnabled: true, ivrFlow: JSON.stringify(supportIvrFlow) },
+    { e164Number: '+13125550110', friendlyName: 'Chicago Office', numberType: 'LOCAL', timezone: 'America/Chicago', ivrEnabled: false, ivrFlow: null },
   ];
 
   for (const num of numbers) {
     const vn = await prisma.virtualNumber.upsert({
       where: { e164Number: num.e164Number },
-      update: {},
+      update: {
+        ivrEnabled: num.ivrEnabled,
+        ivrFlow: num.ivrFlow,
+      },
       create: {
         userId: user.id,
         ...num,
