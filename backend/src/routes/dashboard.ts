@@ -32,7 +32,7 @@ router.get('/stats', async (req: Request, res: Response) => {
     select: { duration: true },
   });
   const avgDuration = completedLogs.length
-    ? Math.round(completedLogs.reduce((s, l) => s + (l.duration || 0), 0) / completedLogs.length)
+    ? Math.round(completedLogs.reduce((s: number, l: any) => s + (l.duration || 0), 0) / completedLogs.length)
     : 0;
 
   // Recent 7-day call volume
@@ -45,7 +45,7 @@ router.get('/stats', async (req: Request, res: Response) => {
 
   // Group by day
   const dailyMap: Record<string, number> = {};
-  recentLogs.forEach((l) => {
+  recentLogs.forEach((l: any) => {
     const day = l.startedAt.toISOString().slice(0, 10);
     dailyMap[day] = (dailyMap[day] || 0) + 1;
   });
@@ -62,7 +62,7 @@ router.get('/stats', async (req: Request, res: Response) => {
     monthCalls: monthLogs,
     callGrowth,
     avgDuration,
-    statusBreakdown: statusBreakdown.map((s) => ({ status: s.status, count: s._count })),
+    statusBreakdown: statusBreakdown.map((s: any) => ({ status: s.status, count: s._count })),
     dailyCalls,
   });
 });

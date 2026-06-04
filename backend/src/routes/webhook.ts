@@ -46,7 +46,7 @@ async function resolveConfig(e164: string): Promise<CachedConfig | null> {
     voicemailGreeting: vn.voicemailGreeting,
     ivrEnabled: vn.ivrEnabled,
     ivrFlow: vn.ivrFlow ? JSON.parse(vn.ivrFlow) : null,
-    routingRules: vn.routingRules.map((r) => ({
+    routingRules: vn.routingRules.map((r: any) => ({
       id: r.id,
       priority: r.priority,
       activeDays: r.activeDays ? r.activeDays.split(',').map(Number) : [],
