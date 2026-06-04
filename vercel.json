@@ -1,42 +1,21 @@
 {
-  "version": 2,
-  "builds": [
+  "cleanUrls": true,
+  "rewrites": [
     {
-      "src": "backend/src/index.ts",
-      "use": "@vercel/node"
+      "source": "/api/(.*)",
+      "destination": "/api"
     },
     {
-      "src": "frontend/package.json",
-      "use": "@vercel/static-build",
-      "config": {
-        "distDir": "dist"
-      }
-    }
-  ],
-  "routes": [
-    {
-      "src": "/api/(.*)",
-      "dest": "backend/src/index.ts"
+      "source": "/webhook/(.*)",
+      "destination": "/api"
     },
     {
-      "src": "/webhook/(.*)",
-      "dest": "backend/src/index.ts"
+      "source": "/health",
+      "destination": "/api"
     },
     {
-      "src": "/health",
-      "dest": "backend/src/index.ts"
-    },
-    {
-      "src": "/assets/(.*)",
-      "dest": "frontend/dist/assets/$1"
-    },
-    {
-      "src": "/(.*)\\.(html|json|png|jpg|jpeg|gif|ico|svg|css|js|webp)",
-      "dest": "frontend/dist/$1.$2"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "frontend/dist/index.html"
+      "source": "/((?!api|webhook|health).*)",
+      "destination": "/index.html"
     }
   ]
 }
