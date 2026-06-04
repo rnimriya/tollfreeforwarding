@@ -28,13 +28,17 @@ app.use('/api/dashboard', dashboardRouter);
 
 app.get('/health', (_req, res) => res.json({ status: 'ok', ts: new Date().toISOString() }));
 
-app.listen(PORT, () => {
-  console.log(`\n🚀 Backend running at http://localhost:${PORT}`);
-  console.log(`📞 Webhook endpoint: http://localhost:${PORT}/webhook/inbound`);
-  console.log(`🗄️  Prisma Studio: pnpm db:studio\n`);
-});
+if (!process.env.VERCEL) {
+  app.listen(PORT, () => {
+    console.log(`\n🚀 Backend running at http://localhost:${PORT}`);
+    console.log(`📞 Webhook endpoint: http://localhost:${PORT}/webhook/inbound`);
+    console.log(`🗄️  Prisma Studio: pnpm db:studio\n`);
+  });
+}
 
 process.on('SIGINT', async () => {
   await prisma.$disconnect();
   process.exit(0);
 });
+
+export default app;
