@@ -26,6 +26,7 @@ app.use('/api/routing', routingRouter);
 app.use('/api/logs', logsRouter);
 app.use('/api/dashboard', dashboardRouter);
 
+app.get('/', (_req, res) => res.json({ message: 'CloudPBX API is running' }));
 app.get('/health', (_req, res) => res.json({ status: 'ok', ts: new Date().toISOString() }));
 
 if (!process.env.VERCEL) {
