@@ -16,7 +16,7 @@ app.use(cors({ origin: 'http://localhost:5173', credentials: true }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Public webhook (no auth — Twilio hits this)
+// Public webhook (no auth - Twilio hits this)
 app.use('/webhook', webhookRouter);
 
 // API routes

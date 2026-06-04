@@ -40,18 +40,18 @@ function useInView(threshold = 0.2) {
 
 // ── Static data ──────────────────────────────────────────────────────
 const features = [
-  { icon: Globe, title: 'Virtual Numbers Worldwide', desc: 'Instantly provision local, toll-free, and international numbers in 60+ countries. No hardware, no waiting.', color: '#6366f1' },
-  { icon: Workflow, title: 'Visual IVR Builder', desc: 'Design sophisticated call flows with drag-and-drop. Menu trees, conditions, greetings — zero code required.', color: '#22c55e' },
-  { icon: Clock, title: 'Time-Based Routing', desc: 'Automatically route calls based on business hours, day of week, and timezone. Never miss a caller.', color: '#f59e0b' },
-  { icon: Zap, title: 'Sub-50ms Routing', desc: 'Redis-cached routing rules ensure every call decision happens in milliseconds. Zero latency, perfect clarity.', color: '#38bdf8' },
-  { icon: BarChart2, title: 'Real-Time Analytics', desc: 'Live dashboards showing call volume, duration, status breakdown, and geographic distribution.', color: '#a855f7' },
-  { icon: Shield, title: 'Enterprise Security', desc: 'End-to-end encryption, SOC2 compliant, dedicated SIP trunks, and full call recording with transcription.', color: '#ef4444' },
+  { icon: Globe, title: 'Virtual Numbers Worldwide', desc: 'Buy local, toll-free, and international numbers in 60 countries. They work instantly with no waiting.', color: '#6366f1' },
+  { icon: Workflow, title: 'Visual Menu Builder', desc: 'Design call flows with a drag and drop screen. Create menus, greetings, and rules without code.', color: '#22c55e' },
+  { icon: Clock, title: 'Time-Based Routing', desc: 'Route calls based on business hours, day of the week, and timezone. Never miss a customer call.', color: '#f59e0b' },
+  { icon: Zap, title: 'Fast Routing', desc: 'Our routing database ensures call choices happen in milliseconds. There is no delay or static.', color: '#38bdf8' },
+  { icon: BarChart2, title: 'Call Analytics', desc: 'See live stats on call count, call length, and call outcomes in one simple dashboard.', color: '#a855f7' },
+  { icon: Shield, title: 'Secure Calling', desc: 'We encrypt call data and store call logs safely. You get secure SIP trunks and call recordings.', color: '#ef4444' },
 ];
 
 const steps = [
-  { num: '01', title: 'Get a Number', desc: 'Choose from thousands of local or toll-free numbers in 60+ countries. Provision instantly in your dashboard.', icon: Phone },
-  { num: '02', title: 'Configure Routing', desc: 'Set up time-of-day rules, ring groups, and IVR flows using our visual builder. No code needed.', icon: Workflow },
-  { num: '03', title: 'Calls Go Live', desc: 'Your number routes calls intelligently in real time. Monitor everything from a live analytics dashboard.', icon: PhoneCall },
+  { num: '01', title: 'Get a Number', desc: 'Choose from local or toll-free numbers in 60 countries. Get your number active in seconds.', icon: Phone },
+  { num: '02', title: 'Set up Routing', desc: 'Set up time of day rules, call groups, and phone menus. Use our simple visual builder.', icon: Workflow },
+  { num: '03', title: 'Receive Calls', desc: 'Your number routes calls in real time. Track all calls from your main dashboard.', icon: PhoneCall },
 ];
 
 const plans = [
@@ -88,17 +88,17 @@ const plans = [
 ];
 
 const testimonials = [
-  { name: 'Sarah Chen', role: 'CTO, Streamline Inc.', avatar: 'SC', rating: 5, quote: 'CloudPBX transformed our customer support. We went from missing 30% of calls to zero missed calls in a week. The IVR builder is incredibly intuitive.' },
-  { name: 'Marcus Johnson', role: 'Founder, LaunchFast', avatar: 'MJ', rating: 5, quote: 'We have 12 virtual numbers across 6 countries and it all just works. The time-based routing alone saved us from hiring a night-shift receptionist.' },
-  { name: 'Priya Sharma', role: 'Head of Sales, Nexus CRM', avatar: 'PS', rating: 5, quote: 'The analytics dashboard is phenomenal. I can see call volume trends, average durations, and missed call rates all in one place. It\'s a game-changer.' },
+  { name: 'Sarah Chen', role: 'CTO, Streamline Inc.', avatar: 'SC', rating: 5, quote: 'CloudPBX helped our support team. We used to miss many calls. Now we do not miss any. The menu builder is simple to use.' },
+  { name: 'Marcus Johnson', role: 'Founder, LaunchFast', avatar: 'MJ', rating: 5, quote: 'We have 12 numbers in 6 countries and they work well. Time-based routing saved us from hiring a night worker.' },
+  { name: 'Priya Sharma', role: 'Head of Sales, Nexus CRM', avatar: 'PS', rating: 5, quote: 'The stats dashboard is great. I can see call count, average call length, and missed calls in one place.' },
 ];
 
 const faqs = [
-  { q: 'How fast can I get a new number?', a: 'Instantly. Numbers are provisioned in seconds and ready to receive calls immediately after checkout.' },
-  { q: 'Do I need to install any hardware or software?', a: 'No hardware required. CloudPBX runs entirely in the cloud. Forward calls to any existing phone, SIP client, or mobile device.' },
-  { q: 'Can I port my existing number?', a: 'Yes, we support number porting from most carriers. The process typically takes 5–7 business days.' },
-  { q: 'What happens if I exceed my minute plan?', a: 'You\'ll be notified and can upgrade or pay a small per-minute overage fee. We never cut your calls off.' },
-  { q: 'Is there a free trial?', a: 'Yes — 14-day free trial on all plans. No credit card required to start.' },
+  { q: 'How fast can I get a new number?', a: 'In seconds. Your numbers are active and ready to receive calls as soon as you buy them.' },
+  { q: 'Do I need to install any hardware or software?', a: 'No. CloudPBX runs in the cloud. You can forward calls to your cell phone or computer.' },
+  { q: 'Can I port my existing number?', a: 'Yes. We support number porting from most providers. The process takes 5 to 7 days.' },
+  { q: 'What happens if I exceed my minute plan?', a: 'We will notify you. You can upgrade or pay a small fee per minute. We do not cut off your calls.' },
+  { q: 'Is there a free trial?', a: 'Yes. You get a 14 day trial. You do not need a credit card to start.' },
 ];
 
 // ── Main Component ────────────────────────────────────────────────────
@@ -156,14 +156,14 @@ export default function LandingPage() {
         <div className="lp-hero-content">
           <div className="lp-hero-badge">
             <Zap size={12} />
-            <span>Sub-50ms call routing — the fastest in the industry</span>
+            <span>Calls route in under 50 milliseconds. This is the fastest speed available.</span>
           </div>
           <h1 className="lp-hero-title">
             Your Business Phone System,<br />
-            <span className="lp-gradient-text">Reimagined for the Cloud</span>
+            <span className="lp-gradient-text">Built for the Cloud</span>
           </h1>
           <p className="lp-hero-subtitle">
-            Provision virtual numbers in 60+ countries, build intelligent call flows with a drag-and-drop IVR builder, and route calls based on time, day, and caller ID — all in one platform.
+            Get numbers in 60 countries. Set up call routing with our visual builder. Route calls based on time, day, and caller ID.
           </p>
           <div className="lp-hero-ctas">
             {token ? (
@@ -188,7 +188,7 @@ export default function LandingPage() {
             </div>
             <div>
               <div className="lp-trust-stars">{'★★★★★'}</div>
-              <div className="lp-trust-text">Trusted by 12,000+ businesses worldwide</div>
+              <div className="lp-trust-text">Trusted by 12,000 businesses.</div>
             </div>
           </div>
         </div>
@@ -276,7 +276,7 @@ export default function LandingPage() {
           <div className="lp-section-header">
             <div className="lp-section-badge">Features</div>
             <h2>Everything your business phone system needs</h2>
-            <p>From simple call forwarding to enterprise-grade IVR flows — CloudPBX handles it all without any hardware.</p>
+            <p>CloudPBX handles call forwarding and phone menus. You do not need any hardware.</p>
           </div>
           <div className="lp-features-grid">
             {features.map((f) => (
@@ -297,10 +297,10 @@ export default function LandingPage() {
         <div className="lp-container lp-spotlight-inner">
           <div className="lp-spotlight-text">
             <div className="lp-section-badge">Visual IVR Builder</div>
-            <h2>Design call flows without writing a single line of code</h2>
-            <p>Our drag-and-drop IVR builder lets you create sophisticated call routing — greetings, menus, conditions, and forwarding — and publish changes instantly.</p>
+            <h2>Design call flows without writing code</h2>
+            <p>Our builder lets you create custom routing rules. Add greetings, menus, and forwarding. Publish changes with one click.</p>
             <ul className="lp-spotlight-list">
-              {['6 node types: Greeting, Menu, Condition, Forward, Voicemail, Hang Up', 'Real-time preview and one-click publish', 'DTMF digit routing with fallback paths', 'Time-of-day and caller ID conditions built-in'].map((item) => (
+              {['Six node types including greetings and menus', 'Preview your flow and publish with one click', 'Set options for dial pad buttons', 'Route calls based on business hours'].map((item) => (
                 <li key={item}><Check size={15} color="var(--lp-accent)" /><span>{item}</span></li>
               ))}
             </ul>
@@ -408,7 +408,7 @@ export default function LandingPage() {
             ))}
           </div>
           <p className="lp-pricing-note">
-            All plans include 14-day free trial · No credit card required · Cancel anytime
+            All plans include a 14 day free trial. You do not need a credit card. Cancel anytime.
           </p>
         </div>
       </section>
@@ -467,7 +467,7 @@ export default function LandingPage() {
         <div className="lp-orb lp-orb-cta-2" />
         <div className="lp-container lp-cta-inner">
           <h2>Ready to transform your business phone system?</h2>
-          <p>Join 12,000+ businesses already using CloudPBX. Set up in minutes, not days.</p>
+          <p>Join 12,000 businesses already using CloudPBX. Set up your account in minutes.</p>
           <div className="lp-cta-actions">
             {token ? (
               <Link to="/dashboard" className="lp-btn-hero-primary">
@@ -476,7 +476,7 @@ export default function LandingPage() {
             ) : (
               <>
                 <Link to="/register" className="lp-btn-hero-primary">
-                  Start Free Trial — No Credit Card <ArrowRight size={16} />
+                  Start Free Trial with No Credit Card <ArrowRight size={16} />
                 </Link>
                 <Link to="/login" className="lp-btn-hero-ghost" style={{ color: 'rgba(255,255,255,0.8)', borderColor: 'rgba(255,255,255,0.2)' }}>
                   Sign In to Dashboard
@@ -496,7 +496,7 @@ export default function LandingPage() {
                 <div className="lp-logo-icon">📞</div>
                 <span className="lp-logo-text">Cloud<span>PBX</span></span>
               </div>
-              <p>The most developer-friendly cloud PBX platform. Virtual numbers, intelligent routing, and real-time analytics — all in one API.</p>
+              <p>Get virtual numbers, call routing, and real-time stats in one simple tool.</p>
               <div className="lp-footer-social">
                 <a href="#" aria-label="Twitter"><Twitter size={17} /></a>
                 <a href="#" aria-label="GitHub"><Github size={17} /></a>

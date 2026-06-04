@@ -31,7 +31,7 @@ router.get('/', async (req: Request, res: Response) => {
   return res.json({ total, page, limit, data: logs });
 });
 
-// POST /api/logs/simulate — create a fake call log for testing
+// POST /api/logs/simulate - create a fake call log for testing
 router.post('/simulate', async (req: Request, res: Response) => {
   const numbers = await prisma.virtualNumber.findMany({
     where: { userId: user(req).userId },

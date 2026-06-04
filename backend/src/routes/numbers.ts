@@ -29,7 +29,7 @@ router.get('/:id', async (req: Request, res: Response) => {
   return res.json(vn);
 });
 
-// POST /api/numbers — provision a new (simulated) number
+// POST /api/numbers - provision a new (simulated) number
 router.post('/', async (req: Request, res: Response) => {
   const { friendlyName, countryCode = 'US', numberType = 'LOCAL', timezone = 'America/New_York' } = req.body;
 

@@ -149,12 +149,12 @@ export default function NumberDetailPage() {
                   <td>
                     <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
                       <div>{rule.activeDays.map((d: number) => DAYS[d - 1]).join(', ')}</div>
-                      {rule.openTime && <div>{rule.openTime} – {rule.closeTime}</div>}
+                      {rule.openTime && <div>{rule.openTime} to {rule.closeTime}</div>}
                     </div>
                   </td>
                   <td><span className={`badge badge-${actionColor(rule.action)}`}>{rule.action.replace(/_/g, ' ')}</span></td>
                   <td style={{ fontFamily: 'monospace', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-                    {rule.destinations?.[0]?.value || rule.sipUri || '—'}
+                    {rule.destinations?.[0]?.value || rule.sipUri || '-'}
                   </td>
                   <td>
                     <div style={{ display: 'flex', gap: '0.5rem' }}>

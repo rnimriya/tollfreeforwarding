@@ -11,7 +11,7 @@ const STATUS_CLASS: Record<string, string> = {
 };
 
 function fmtDuration(s: number | null) {
-  if (!s) return '—';
+  if (!s) return '-';
   const m = Math.floor(s / 60);
   const sec = s % 60;
   return m > 0 ? `${m}m ${sec}s` : `${sec}s`;
@@ -96,7 +96,7 @@ export default function CallLogsPage() {
                       )}
                     </td>
                     <td style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '0.82rem', color: 'var(--text-secondary)' }}>
-                      {log.forwardedTo || '—'}
+                      {log.forwardedTo || '-'}
                     </td>
                     <td><span className={`badge badge-${STATUS_CLASS[log.status] || 'muted'}`}>{log.status.replace('_', ' ')}</span></td>
                     <td style={{ fontFamily: 'monospace', fontSize: '0.82rem' }}>

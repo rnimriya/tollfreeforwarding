@@ -124,7 +124,7 @@ export default function DashboardPage() {
       {/* Charts */}
       <div className="charts-grid">
         <div className="card">
-          <h3 style={{ marginBottom: '1.25rem' }}>Call Volume — Last 7 Days</h3>
+          <h3 style={{ marginBottom: '1.25rem' }}>Call Volume - Last 7 Days</h3>
           {chartData.length === 0 ? (
             <div className="empty-state" style={{ padding: '3rem' }}>
               <Activity size={32} />

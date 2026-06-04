@@ -108,7 +108,7 @@ function buildXml(action: string, rule: CachedConfig['routingRules'][number] | n
   </Dial>
 </Response>`;
       }
-      // SEQUENTIAL — first destination
+      // SEQUENTIAL - first destination
       const dest = dests[0]?.value || '';
       return `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
@@ -148,7 +148,7 @@ function buildXml(action: string, rule: CachedConfig['routingRules'][number] | n
   }
 }
 
-// POST /webhook/inbound  — Twilio / Plivo hits this
+// POST /webhook/inbound - Twilio / Plivo hits this
 router.post('/inbound', async (req: Request, res: Response) => {
   const t0 = Date.now();
 
@@ -203,7 +203,7 @@ router.post('/inbound', async (req: Request, res: Response) => {
   }
 });
 
-// GET /webhook/inbound — simulate from browser for testing
+// GET /webhook/inbound - simulate from browser for testing
 router.get('/inbound', async (req: Request, res: Response) => {
   const to = req.query.to as string;
   const from = req.query.from as string || '+15550001234';
