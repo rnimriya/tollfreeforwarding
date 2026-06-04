@@ -1,22 +1,24 @@
 {
   "version": 2,
-  "cleanUrls": true,
-  "rewrites": [
+  "routes": [
     {
-      "source": "/api/(.*)",
-      "destination": "/api"
+      "src": "/api/(.*)",
+      "dest": "api/index.ts"
     },
     {
-      "source": "/webhook/(.*)",
-      "destination": "/api"
+      "src": "/webhook/(.*)",
+      "dest": "api/index.ts"
     },
     {
-      "source": "/health",
-      "destination": "/api"
+      "src": "/health",
+      "dest": "api/index.ts"
     },
     {
-      "source": "/((?!api|webhook|health).*)",
-      "destination": "/index.html"
+      "handle": "filesystem"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/index.html"
     }
   ]
 }
