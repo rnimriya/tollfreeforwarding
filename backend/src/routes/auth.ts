@@ -1,5 +1,6 @@
 import { Router, Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
+import crypto from 'crypto';
 import { prisma } from '../lib/prisma.js';
 import { signToken } from '../lib/auth.js';
 
@@ -56,6 +57,69 @@ router.get('/me', async (req: Request, res: Response) => {
   } catch {
     return res.status(401).json({ error: 'Invalid token' });
   }
+});
+
+// POST /api/auth/forgot-password
+router.post('/forgot-password', async (req: Request, res: Response) => {
+  const { email } = req.body;
+  if (!email) {
+    return res.status(400).json({ error: 'Email is required' });
+  }
+
+  const user = await prisma.user.findUnique({ where: { email } });
+  if (!user) {
+    return res.json({ message: 'If the email exists, a reset link has been generated.' });
+  }
+
+  const token = crypto.randomBytes(20).toString('hex');
+  const expires = new Date(Date.now() + 3600000); // 1 hour
+
+  await prisma.user.update({
+    where: { email },
+    data: { resetToken: token, resetTokenExpires: expires },
+  });
+
+  const resetLink = `http://localhost:5173/reset-password?token=${token}`;
+  console.log(`\n🔑 [PASSWORD RESET LINK]: ${resetLink}\n`);
+
+  return res.json({
+    message: 'If the email exists, a reset link has been generated.',
+    resetLink,
+    token
+  });
+});
+
+// POST /api/auth/reset-password
+router.post('/reset-password', async (req: Request, res: Response) => {
+  const { token, password } = req.body;
+  if (!token || !password) {
+    return res.status(400).json({ error: 'Token and password required' });
+  }
+
+  const user = await prisma.user.findFirst({
+    where: {
+      resetToken: token,
+      resetTokenExpires: {
+        gt: new Date()
+      }
+    }
+  });
+
+  if (!user) {
+    return res.status(400).json({ error: 'Invalid or expired token' });
+  }
+
+  const passwordHash = await bcrypt.hash(password, 10);
+  await prisma.user.update({
+    where: { id: user.id },
+    data: {
+      passwordHash,
+      resetToken: null,
+      resetTokenExpires: null
+    }
+  });
+
+  return res.json({ message: 'Password reset successful' });
 });
 
 export default router;
