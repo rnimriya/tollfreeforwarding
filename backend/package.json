@@ -6,8 +6,12 @@
     "dev": "node --watch --import tsx/esm src/index.ts",
     "build": "prisma generate && tsc",
     "db:migrate": "prisma migrate dev",
+    "db:migrate:deploy": "prisma migrate deploy",
     "db:seed": "node --import tsx/esm src/seed.ts",
     "db:studio": "prisma studio"
+  },
+  "prisma": {
+    "seed": "node --import tsx/esm src/seed.ts"
   },
   "dependencies": {
     "@prisma/client": "^5.14.0",

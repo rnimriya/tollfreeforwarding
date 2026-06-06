@@ -136,35 +136,40 @@ async function seed() {
     console.log(`  ↳ Created 2 routing rules`);
   }
 
-  // Seed some call logs
-  const allNumbers = await prisma.virtualNumber.findMany({ where: { userId: user.id } });
-  const statuses = ['COMPLETED', 'COMPLETED', 'COMPLETED', 'NO_ANSWER', 'VOICEMAIL', 'FAILED'];
+  // Seed call logs only if none exist (avoid duplicates on re-runs)
+  const existingLogs = await prisma.callLog.count({ where: { userId: user.id } });
+  if (existingLogs === 0) {
+    const allNumbers = await prisma.virtualNumber.findMany({ where: { userId: user.id } });
+    const statuses = ['COMPLETED', 'COMPLETED', 'COMPLETED', 'NO_ANSWER', 'VOICEMAIL', 'FAILED'];
 
-  for (let i = 0; i < 30; i++) {
-    const vn = allNumbers[i % allNumbers.length];
-    const status = statuses[Math.floor(Math.random() * statuses.length)];
-    const duration = status === 'COMPLETED' ? Math.floor(30 + Math.random() * 300) : null;
-    const daysAgo = Math.floor(Math.random() * 30);
-    const startedAt = new Date(Date.now() - daysAgo * 86400000 - Math.random() * 86400000);
-    const area = Math.floor(200 + Math.random() * 800);
-    const line = Math.floor(1000000 + Math.random() * 9000000);
+    for (let i = 0; i < 30; i++) {
+      const vn = allNumbers[i % allNumbers.length];
+      const status = statuses[Math.floor(Math.random() * statuses.length)];
+      const duration = status === 'COMPLETED' ? Math.floor(30 + Math.random() * 300) : null;
+      const daysAgo = Math.floor(Math.random() * 30);
+      const startedAt = new Date(Date.now() - daysAgo * 86400000 - Math.random() * 86400000);
+      const area = Math.floor(200 + Math.random() * 800);
+      const line = Math.floor(1000000 + Math.random() * 9000000);
 
-    await prisma.callLog.create({
-      data: {
-        virtualNumberId: vn.id,
-        userId: user.id,
-        callerNumber: `+1${area}${line}`,
-        calledNumber: vn.e164Number,
-        forwardedTo: '+15550001111',
-        status,
-        duration,
-        direction: 'INBOUND',
-        startedAt,
-        endedAt: duration ? new Date(startedAt.getTime() + duration * 1000) : null,
-      },
-    });
+      await prisma.callLog.create({
+        data: {
+          virtualNumberId: vn.id,
+          userId: user.id,
+          callerNumber: `+1${area}${line}`,
+          calledNumber: vn.e164Number,
+          forwardedTo: '+15550001111',
+          status,
+          duration,
+          direction: 'INBOUND',
+          startedAt,
+          endedAt: duration ? new Date(startedAt.getTime() + duration * 1000) : null,
+        },
+      });
+    }
+    console.log(`✅ Seeded 30 call logs`);
+  } else {
+    console.log(`⏭️  Skipped call logs (${existingLogs} already exist)`);
   }
-  console.log(`✅ Seeded 30 call logs`);
 
   console.log('\n🎉 Seed complete!');
   console.log('   Email:    demo@example.com');
