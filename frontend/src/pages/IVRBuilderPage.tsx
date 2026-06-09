@@ -212,9 +212,9 @@ export default function IVRBuilderPage() {
 
   const addNode = useCallback((kind: NodeKind) => {
     const cfg = NODE_TYPES_CONFIG.find((n) => n.type === kind)!;
-    const newNode: Node = {
+    const newNode = {
       id: uuid(),
-      type: 'ivr',
+      type: 'ivr' as const,
       position: { x: 100 + Math.random() * 300, y: 200 + Math.random() * 200 },
       data: { kind, label: cfg.label, prompt: '', value: '' },
     };
