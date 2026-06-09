@@ -78,24 +78,31 @@ async function seed() {
     ]
   };
 
-  // Create 3 virtual numbers
+  // Clear old data for demo user to prevent duplicate keys/bloat on re-runs
+  await prisma.routingRule.deleteMany({ where: { virtualNumber: { userId: user.id } } });
+  await prisma.callLog.deleteMany({ where: { userId: user.id } });
+  await prisma.virtualNumber.deleteMany({ where: { userId: user.id } });
+
+  // Create 5 virtual numbers
   const numbers = [
-    { e164Number: '+18005550100', friendlyName: 'Sales Line', numberType: 'TOLL_FREE', timezone: 'America/New_York', ivrEnabled: false, ivrFlow: null },
-    { e164Number: '+14155550199', friendlyName: 'Support Line', numberType: 'LOCAL', timezone: 'America/Los_Angeles', ivrEnabled: true, ivrFlow: JSON.stringify(supportIvrFlow) },
-    { e164Number: '+13125550110', friendlyName: 'Chicago Office', numberType: 'LOCAL', timezone: 'America/Chicago', ivrEnabled: false, ivrFlow: null },
+    { e164Number: '+18005550100', friendlyName: 'US Sales Hotline', numberType: 'TOLL_FREE', timezone: 'America/New_York', ivrEnabled: false, ivrFlow: null, countryCode: 'US' },
+    { e164Number: '+14155550199', friendlyName: 'SF Support Attendant', numberType: 'LOCAL', timezone: 'America/Los_Angeles', ivrEnabled: true, ivrFlow: JSON.stringify(supportIvrFlow), countryCode: 'US' },
+    { e164Number: '+13125550110', friendlyName: 'Chicago Branch Office', numberType: 'LOCAL', timezone: 'America/Chicago', ivrEnabled: false, ivrFlow: null, countryCode: 'US' },
+    { e164Number: '+442071234567', friendlyName: 'London HQ Reception', numberType: 'LOCAL', timezone: 'Europe/London', ivrEnabled: false, ivrFlow: null, countryCode: 'GB' },
+    { e164Number: '+81355550188', friendlyName: 'Tokyo Operations Desk', numberType: 'LOCAL', timezone: 'Asia/Tokyo', ivrEnabled: false, ivrFlow: null, countryCode: 'JP' },
   ];
 
   for (const num of numbers) {
-    const vn = await prisma.virtualNumber.upsert({
-      where: { e164Number: num.e164Number },
-      update: {
+    const vn = await prisma.virtualNumber.create({
+      data: {
+        userId: user.id,
+        e164Number: num.e164Number,
+        friendlyName: num.friendlyName,
+        numberType: num.numberType,
+        timezone: num.timezone,
         ivrEnabled: num.ivrEnabled,
         ivrFlow: num.ivrFlow,
-      },
-      create: {
-        userId: user.id,
-        ...num,
-        countryCode: 'US',
+        countryCode: num.countryCode,
         status: 'ACTIVE',
         voicemailGreeting: 'You have reached our voicemail. Please leave a message after the tone.',
       },
@@ -103,8 +110,6 @@ async function seed() {
     console.log(`✅ Number: ${vn.e164Number} (${vn.friendlyName})`);
 
     // Add routing rules
-    await prisma.routingRule.deleteMany({ where: { virtualNumberId: vn.id } });
-
     await prisma.routingRule.createMany({
       data: [
         {
@@ -136,40 +141,38 @@ async function seed() {
     console.log(`  ↳ Created 2 routing rules`);
   }
 
-  // Seed call logs only if none exist (avoid duplicates on re-runs)
-  const existingLogs = await prisma.callLog.count({ where: { userId: user.id } });
-  if (existingLogs === 0) {
-    const allNumbers = await prisma.virtualNumber.findMany({ where: { userId: user.id } });
-    const statuses = ['COMPLETED', 'COMPLETED', 'COMPLETED', 'NO_ANSWER', 'VOICEMAIL', 'FAILED'];
+  // Seed 60 diverse, realistic call logs distributed across the last 30 days
+  const allNumbers = await prisma.virtualNumber.findMany({ where: { userId: user.id } });
+  const statuses = ['COMPLETED', 'COMPLETED', 'COMPLETED', 'NO_ANSWER', 'VOICEMAIL', 'FAILED'];
+  const callerPrefixes = ['+1415', '+1212', '+4420', '+813', '+331', '+612'];
 
-    for (let i = 0; i < 30; i++) {
-      const vn = allNumbers[i % allNumbers.length];
-      const status = statuses[Math.floor(Math.random() * statuses.length)];
-      const duration = status === 'COMPLETED' ? Math.floor(30 + Math.random() * 300) : null;
-      const daysAgo = Math.floor(Math.random() * 30);
-      const startedAt = new Date(Date.now() - daysAgo * 86400000 - Math.random() * 86400000);
-      const area = Math.floor(200 + Math.random() * 800);
-      const line = Math.floor(1000000 + Math.random() * 9000000);
+  for (let i = 0; i < 60; i++) {
+    const vn = allNumbers[i % allNumbers.length];
+    const status = statuses[Math.floor(Math.random() * statuses.length)];
+    const duration = status === 'COMPLETED' ? Math.floor(45 + Math.random() * 450) : null;
+    
+    // Distribute call dates evenly over the last 30 days
+    const daysAgo = Math.floor(i / 2); // 0 to 30 days ago
+    const startedAt = new Date(Date.now() - daysAgo * 86400000 - Math.random() * 3600000 * 8);
+    const line = Math.floor(1000 + Math.random() * 9000);
+    const prefix = callerPrefixes[Math.floor(Math.random() * callerPrefixes.length)];
 
-      await prisma.callLog.create({
-        data: {
-          virtualNumberId: vn.id,
-          userId: user.id,
-          callerNumber: `+1${area}${line}`,
-          calledNumber: vn.e164Number,
-          forwardedTo: '+15550001111',
-          status,
-          duration,
-          direction: 'INBOUND',
-          startedAt,
-          endedAt: duration ? new Date(startedAt.getTime() + duration * 1000) : null,
-        },
-      });
-    }
-    console.log(`✅ Seeded 30 call logs`);
-  } else {
-    console.log(`⏭️  Skipped call logs (${existingLogs} already exist)`);
+    await prisma.callLog.create({
+      data: {
+        virtualNumberId: vn.id,
+        userId: user.id,
+        callerNumber: `${prefix}555${line}`,
+        calledNumber: vn.e164Number,
+        forwardedTo: '+15550001111',
+        status,
+        duration,
+        direction: 'INBOUND',
+        startedAt,
+        endedAt: duration ? new Date(startedAt.getTime() + duration * 1000) : null,
+      },
+    });
   }
+  console.log(`✅ Seeded 60 call logs`);
 
   console.log('\n🎉 Seed complete!');
   console.log('   Email:    demo@example.com');

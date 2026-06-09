@@ -3,17 +3,40 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from './stores/authStore';
 import { useTheme } from './stores/themeStore';
 import AppLayout from './components/AppLayout';
+import MarketingLayout from './components/MarketingLayout';
+
+// Public pages
+import LandingPage from './pages/LandingPage';
+import LinksPage from './pages/LinksPage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import ResetPasswordPage from './pages/ResetPasswordPage';
+
+// Marketing / Support pages
+import FeaturesPage from './pages/FeaturesPage';
+import PricingPage from './pages/PricingPage';
+import IVRMarketingPage from './pages/IVRMarketingPage';
+import AnalyticsMarketingPage from './pages/AnalyticsMarketingPage';
+import APIDocsPage from './pages/APIDocsPage';
+import WebhooksMarketingPage from './pages/WebhooksMarketingPage';
+import AboutPage from './pages/AboutPage';
+import BlogPage from './pages/BlogPage';
+import CareersPage from './pages/CareersPage';
+import PressKitPage from './pages/PressKitPage';
+import AffiliatesPage from './pages/AffiliatesPage';
+import DocumentationPage from './pages/DocumentationPage';
+import StatusPage from './pages/StatusPage';
+import ContactPage from './pages/ContactPage';
+import CommunityPage from './pages/CommunityPage';
+import SLAPage from './pages/SLAPage';
+
+// Private application pages
 import DashboardPage from './pages/DashboardPage';
 import NumbersPage from './pages/NumbersPage';
 import NumberDetailPage from './pages/NumberDetailPage';
 import CallLogsPage from './pages/CallLogsPage';
 import IVRBuilderPage from './pages/IVRBuilderPage';
-import LandingPage from './pages/LandingPage';
-import LinksPage from './pages/LinksPage';
 
 function RequireAuth({ children }: { children: React.ReactNode }) {
   const { token } = useAuth();
@@ -34,6 +57,28 @@ export default function App() {
       <Route path="/register" element={<RegisterPage />} />
       <Route path="/forgot-password" element={<ForgotPasswordPage />} />
       <Route path="/reset-password" element={<ResetPasswordPage />} />
+      
+      {/* Public Marketing/Support pages layout wrapper */}
+      <Route element={<MarketingLayout />}>
+        <Route path="/features" element={<FeaturesPage />} />
+        <Route path="/pricing" element={<PricingPage />} />
+        <Route path="/ivr" element={<IVRMarketingPage />} />
+        <Route path="/analytics" element={<AnalyticsMarketingPage />} />
+        <Route path="/api-docs" element={<APIDocsPage />} />
+        <Route path="/webhooks" element={<WebhooksMarketingPage />} />
+        <Route path="/about" element={<AboutPage />} />
+        <Route path="/blog" element={<BlogPage />} />
+        <Route path="/careers" element={<CareersPage />} />
+        <Route path="/press-kit" element={<PressKitPage />} />
+        <Route path="/affiliates" element={<AffiliatesPage />} />
+        <Route path="/docs" element={<DocumentationPage />} />
+        <Route path="/status" element={<StatusPage />} />
+        <Route path="/contact" element={<ContactPage />} />
+        <Route path="/community" element={<CommunityPage />} />
+        <Route path="/sla" element={<SLAPage />} />
+      </Route>
+
+      {/* Private Application Dashboard routes */}
       <Route
         element={
           <RequireAuth>

@@ -523,14 +523,46 @@ export default function LandingPage() {
               </div>
             </div>
             {[
-              { heading: 'Product', links: ['Features', 'Pricing', 'IVR Builder', 'Analytics', 'API Docs', 'Webhooks'] },
-              { heading: 'Company', links: ['About', 'Blog', 'Careers', 'Press Kit', 'Affiliates'] },
-              { heading: 'Support', links: ['Documentation', 'Status Page', 'Contact Us', 'Community Forum', 'SLA'] },
+              {
+                heading: 'Product',
+                links: [
+                  { label: 'Features', to: '/features' },
+                  { label: 'Pricing', to: '/pricing' },
+                  { label: 'IVR Builder', to: '/ivr' },
+                  { label: 'Analytics', to: '/analytics' },
+                  { label: 'API Docs', to: '/api-docs' },
+                  { label: 'Webhooks', to: '/webhooks' }
+                ]
+              },
+              {
+                heading: 'Company',
+                links: [
+                  { label: 'About', to: '/about' },
+                  { label: 'Blog', to: '/blog' },
+                  { label: 'Careers', to: '/careers' },
+                  { label: 'Press Kit', to: '/press-kit' },
+                  { label: 'Affiliates', to: '/affiliates' }
+                ]
+              },
+              {
+                heading: 'Support',
+                links: [
+                  { label: 'Documentation', to: '/docs' },
+                  { label: 'Status Page', to: '/status' },
+                  { label: 'Contact Us', to: '/contact' },
+                  { label: 'Community Forum', to: '/community' },
+                  { label: 'SLA', to: '/sla' }
+                ]
+              },
             ].map((col) => (
               <div key={col.heading} className="lp-footer-col">
                 <h4>{col.heading}</h4>
                 <ul>
-                  {col.links.map((l) => <li key={l}><a href="#">{l}</a></li>)}
+                  {col.links.map((link) => (
+                    <li key={link.label}>
+                      <Link to={link.to}>{link.label}</Link>
+                    </li>
+                  ))}
                 </ul>
               </div>
             ))}
