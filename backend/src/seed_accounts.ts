@@ -11,11 +11,11 @@ function randInt(min: number, max: number) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
-function pick<T>(arr: T[]): T {
+function pick<T>(arr: readonly T[]): T {
   return arr[Math.floor(Math.random() * arr.length)];
 }
 
-const CALL_STATUSES = ['COMPLETED', 'COMPLETED', 'COMPLETED', 'NO_ANSWER', 'VOICEMAIL', 'FAILED'] as const;
+const CALL_STATUSES = ['COMPLETED', 'COMPLETED', 'COMPLETED', 'NO_ANSWER', 'VOICEMAIL', 'FAILED'];
 
 // ─── ADMIN seed (ENTERPRISE) ──────────────────────────────────────────────────
 
