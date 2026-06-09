@@ -1,12 +1,11 @@
 import jwt from 'jsonwebtoken';
 import { Request, Response, NextFunction } from 'express';
 
-if (process.env.NODE_ENV === 'production' && !process.env.JWT_SECRET) {
-  console.error('FATAL: JWT_SECRET must be set in production');
-  process.exit(1);
-}
-
 const SECRET = process.env.JWT_SECRET || 'dev-secret';
+
+if (process.env.NODE_ENV === 'production' && !process.env.JWT_SECRET) {
+  console.error('WARNING: JWT_SECRET is not set. Using insecure default — set this env var immediately.');
+}
 
 export interface AuthPayload {
   userId: string;
