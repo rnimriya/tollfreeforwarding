@@ -54,6 +54,25 @@ app.use('/api/dashboard', dashboardRouter);
 
 app.use(errorHandler);
 
+app.get('/api/db-test', async (_req, res) => {
+  try {
+    const result = await prisma.$queryRaw`SELECT 1 as val`;
+    return res.json({ status: 'connected', result });
+  } catch (e: any) {
+    return res.status(500).json({ error: errToJson(e) });
+  }
+});
+
+function errToJson(err: any) {
+  return {
+    message: err.message,
+    name: err.name,
+    code: err.code,
+    clientVersion: err.clientVersion,
+    stack: err.stack
+  };
+}
+
 app.get('/', (_req, res) => res.json({ message: 'CloudPBX API is running' }));
 app.get('/health', (_req, res) => res.json({ status: 'ok', ts: new Date().toISOString() }));
 
