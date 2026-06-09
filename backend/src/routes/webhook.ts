@@ -71,23 +71,36 @@ async function resolveConfig(e164: string): Promise<CachedConfig | null> {
 // Audit active schedules
 function isRuleActive(rule: CachedConfig['routingRules'][number], now: DateTime): boolean {
   const isoWeekday = now.weekday; // 1=Mon … 7=Sun
-  if (rule.activeDays.length > 0 && !rule.activeDays.includes(isoWeekday)) return false;
 
-  if (rule.openTime && rule.closeTime) {
-    const [oh, om] = rule.openTime.split(':').map(Number);
-    const [ch, cm] = rule.closeTime.split(':').map(Number);
-    const open = now.set({ hour: oh, minute: om, second: 0, millisecond: 0 });
-    const close = now.set({ hour: ch, minute: cm, second: 0, millisecond: 0 });
-
-    if (close <= open) {
-      // Overnight window e.g. 22:00–06:00
-      if (now >= close && now < open) return false;
-    } else {
-      if (now < open || now >= close) return false;
-    }
+  // If time window is not fully configured, verify if today is an active day
+  if (!rule.openTime || !rule.closeTime) {
+    if (rule.activeDays.length > 0 && !rule.activeDays.includes(isoWeekday)) return false;
+    return true;
   }
 
-  return true;
+  const [oh, om] = rule.openTime.split(':').map(Number);
+  const [ch, cm] = rule.closeTime.split(':').map(Number);
+
+  const checkShift = (refDay: DateTime): boolean => {
+    const refWeekday = refDay.weekday;
+    // Check if the reference day itself is an active day
+    if (rule.activeDays.length > 0 && !rule.activeDays.includes(refWeekday)) {
+      return false;
+    }
+
+    const open = refDay.set({ hour: oh, minute: om, second: 0, millisecond: 0 });
+    let close = refDay.set({ hour: ch, minute: cm, second: 0, millisecond: 0 });
+
+    // Handle overnight windows crossing midnight
+    if (ch < oh || (ch === oh && cm <= om)) {
+      close = close.plus({ days: 1 });
+    }
+
+    return now >= open && now < close;
+  };
+
+  // Evaluate both the shift starting today and the shift starting yesterday
+  return checkShift(now) || checkShift(now.minus({ days: 1 }));
 }
 
 // Generate Twilio/Plivo TwiML responses
