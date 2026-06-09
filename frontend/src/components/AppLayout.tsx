@@ -1,23 +1,29 @@
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Phone, List, LogOut, Zap, Sun, Moon } from 'lucide-react';
+import { LayoutDashboard, Phone, List, LogOut, Zap, Sun, Moon, Settings, CreditCard, MessageSquare, Shield } from 'lucide-react';
 import { useAuth } from '../stores/authStore';
 import { useTheme } from '../stores/themeStore';
-
-const navItems = [
-  { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
-  { to: '/numbers', icon: Phone, label: 'Virtual Numbers' },
-  { to: '/logs', icon: List, label: 'Call Logs' },
-];
 
 export default function AppLayout() {
   const { user, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
 
+  const isAdmin = user?.role === 'admin';
+
   const handleLogout = () => {
     logout();
     navigate('/login');
   };
+
+  const navItems = [
+    { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
+    { to: '/numbers', icon: Phone, label: 'Virtual Numbers' },
+    { to: '/logs', icon: List, label: 'Call Logs' },
+    { to: '/sms', icon: MessageSquare, label: 'SMS Inbox' },
+    { to: '/billing', icon: CreditCard, label: 'Billing' },
+    { to: '/settings', icon: Settings, label: 'Settings' },
+    ...(isAdmin ? [{ to: '/admin', icon: Shield, label: 'Admin Panel' }] : []),
+  ];
 
   return (
     <div className="app-layout">

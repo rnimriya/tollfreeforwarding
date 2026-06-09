@@ -37,10 +37,19 @@ import NumbersPage from './pages/NumbersPage';
 import NumberDetailPage from './pages/NumberDetailPage';
 import CallLogsPage from './pages/CallLogsPage';
 import IVRBuilderPage from './pages/IVRBuilderPage';
+import SettingsPage from './pages/SettingsPage';
+import BillingPage from './pages/BillingPage';
+import SmsPage from './pages/SmsPage';
+import AdminPage from './pages/AdminPage';
 
 function RequireAuth({ children }: { children: React.ReactNode }) {
   const { token } = useAuth();
   return token ? <>{children}</> : <Navigate to="/login" replace />;
+}
+
+function RequireAdmin({ children }: { children: React.ReactNode }) {
+  const { user } = useAuth();
+  return user?.role === 'admin' ? <>{children}</> : <Navigate to="/dashboard" replace />;
 }
 
 export default function App() {
@@ -49,6 +58,7 @@ export default function App() {
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
   }, [theme]);
+
   return (
     <Routes>
       <Route path="/" element={<LandingPage />} />
@@ -57,7 +67,7 @@ export default function App() {
       <Route path="/register" element={<RegisterPage />} />
       <Route path="/forgot-password" element={<ForgotPasswordPage />} />
       <Route path="/reset-password" element={<ResetPasswordPage />} />
-      
+
       {/* Public Marketing/Support pages layout wrapper */}
       <Route element={<MarketingLayout />}>
         <Route path="/features" element={<FeaturesPage />} />
@@ -91,7 +101,12 @@ export default function App() {
         <Route path="/numbers/:id" element={<NumberDetailPage />} />
         <Route path="/numbers/:id/ivr" element={<IVRBuilderPage />} />
         <Route path="/logs" element={<CallLogsPage />} />
+        <Route path="/sms" element={<SmsPage />} />
+        <Route path="/billing" element={<BillingPage />} />
+        <Route path="/settings" element={<SettingsPage />} />
+        <Route path="/admin" element={<RequireAdmin><AdminPage /></RequireAdmin>} />
       </Route>
+
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );

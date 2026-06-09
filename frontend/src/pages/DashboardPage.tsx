@@ -29,6 +29,14 @@ export default function DashboardPage() {
     refetchInterval: 30_000,
   });
 
+  // G-9: Active call indicator
+  const { data: activeCallData } = useQuery<{ activeCalls: number }>({
+    queryKey: ['active-calls'],
+    queryFn: () => api.get('/calls/active').then((r) => r.data),
+    refetchInterval: 10_000,
+  });
+  const activeCalls = activeCallData?.activeCalls ?? 0;
+
   if (isLoading) {
     return (
       <div className="loading-page">
@@ -58,9 +66,17 @@ export default function DashboardPage() {
           <h1 className="page-title">Dashboard</h1>
           <p className="page-subtitle">Real-time overview of your virtual phone system</p>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <span className="pulse" style={{ display: 'inline-block', width: 8, height: 8, borderRadius: '50%', background: 'var(--success)' }} />
-          <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Live</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          {activeCalls > 0 && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.35rem 0.75rem', background: 'rgba(34,197,94,0.12)', borderRadius: 20 }}>
+              <span className="pulse" style={{ display: 'inline-block', width: 8, height: 8, borderRadius: '50%', background: 'var(--success)', animation: 'pulse 1.5s infinite' }} />
+              <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--success)' }}>{activeCalls} active call{activeCalls !== 1 ? 's' : ''}</span>
+            </div>
+          )}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <span className="pulse" style={{ display: 'inline-block', width: 8, height: 8, borderRadius: '50%', background: 'var(--success)' }} />
+            <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Live</span>
+          </div>
         </div>
       </div>
 

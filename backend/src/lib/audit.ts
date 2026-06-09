@@ -1,6 +1,6 @@
 import { prisma } from './prisma.js';
 
-type AuditAction = 'CREATE' | 'UPDATE' | 'DELETE';
+type AuditAction = 'CREATE' | 'UPDATE' | 'DELETE' | 'RESTORE';
 type EntityType = 'VirtualNumber' | 'RoutingRule';
 
 export async function writeAudit(

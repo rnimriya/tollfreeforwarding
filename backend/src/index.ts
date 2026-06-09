@@ -8,22 +8,21 @@ import routingRouter from './routes/routing.js';
 import logsRouter from './routes/logs.js';
 import webhookRouter from './routes/webhook.js';
 import dashboardRouter from './routes/dashboard.js';
+import billingRouter from './routes/billing.js';
+import adminRouter from './routes/admin.js';
+import smsRouter from './routes/sms.js';
+import callsRouter from './routes/calls.js';
 import { errorHandler } from './lib/errorHandler.js';
 
 const app = express();
 const PORT = process.env.PORT || 3009;
 
-// Required for express-rate-limit to see real client IPs behind Vercel/nginx reverse proxy.
-// Without this, all requests appear to come from the proxy IP and share one rate-limit bucket.
 app.set('trust proxy', 1);
 
 const allowedOrigins = process.env.ALLOWED_ORIGINS
   ? process.env.ALLOWED_ORIGINS.split(',').map((o) => o.trim())
   : ['http://localhost:5173'];
 
-// When set, only Vercel preview URLs whose hostname starts with this prefix are allowed.
-// e.g. VERCEL_APP_PREFIX=tollfreeforwarding-frontend permits
-//      tollfreeforwarding-frontend-*.vercel.app but blocks random-app.vercel.app
 const vercelPrefix = process.env.VERCEL_APP_PREFIX;
 
 app.use(
@@ -47,10 +46,14 @@ app.use(
     credentials: true,
   })
 );
+
+// Raw body parser for Stripe webhook (must come before express.json)
+app.use('/api/billing/webhook', express.raw({ type: 'application/json' }));
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Public webhook (no auth - Twilio hits this)
+// Public webhook (no auth — Twilio/Plivo hits these)
 app.use('/webhook', webhookRouter);
 
 // API routes
@@ -59,6 +62,10 @@ app.use('/api/numbers', numbersRouter);
 app.use('/api/routing', routingRouter);
 app.use('/api/logs', logsRouter);
 app.use('/api/dashboard', dashboardRouter);
+app.use('/api/billing', billingRouter);
+app.use('/api/admin', adminRouter);
+app.use('/api/sms', smsRouter);
+app.use('/api/calls', callsRouter);
 
 app.use(errorHandler);
 

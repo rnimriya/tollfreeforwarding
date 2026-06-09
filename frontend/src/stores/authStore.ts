@@ -9,6 +9,7 @@ interface User {
   firstName: string;
   lastName: string;
   plan: string;
+  role?: string;
 }
 
 interface AuthState {

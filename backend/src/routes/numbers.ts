@@ -6,6 +6,35 @@ import { requireAuth } from '../lib/auth.js';
 const router = Router();
 router.use(requireAuth);
 
+// GET /api/numbers/search?country=US&numberType=LOCAL&areaCode=415&limit=10
+router.get(
+  '/search',
+  asyncHandler(async (req: Request, res: Response) => {
+    const { country, numberType, areaCode, limit } = req.query;
+    const results = await NumberService.searchAvailableNumbers({
+      country: country as string,
+      numberType: numberType as string,
+      areaCode: areaCode as string,
+      limit: limit ? Number(limit) : 10,
+    });
+    return res.json(results);
+  })
+);
+
+// GET /api/numbers/recycled — list soft-deleted numbers (recycle bin)
+router.get(
+  '/recycled',
+  asyncHandler(async (req: Request, res: Response) => {
+    const userId = req.user!.userId;
+    const cutoff = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+    const numbers = await (await import('../lib/prisma.js')).prisma.virtualNumber.findMany({
+      where: { userId, deletedAt: { not: null, gte: cutoff } },
+      orderBy: { deletedAt: 'desc' },
+    });
+    return res.json(numbers);
+  })
+);
+
 // GET /api/numbers?page=&limit=
 router.get(
   '/',
@@ -41,6 +70,15 @@ router.patch(
   asyncHandler(async (req: Request, res: Response) => {
     const updated = await NumberService.updateNumberSettings(req.params.id, req.user!.userId, req.body);
     return res.json(updated);
+  })
+);
+
+// PATCH /api/numbers/:id/restore — G-18: restore soft-deleted number
+router.patch(
+  '/:id/restore',
+  asyncHandler(async (req: Request, res: Response) => {
+    const restored = await NumberService.restoreNumber(req.params.id, req.user!.userId);
+    return res.json(restored);
   })
 );
 

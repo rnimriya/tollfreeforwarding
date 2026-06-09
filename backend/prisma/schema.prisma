@@ -10,20 +10,29 @@ datasource db {
 }
 
 model User {
-  id               String          @id @default(uuid())
-  email            String          @unique
-  passwordHash     String          @map("password_hash")
-  firstName        String          @map("first_name")
-  lastName         String          @map("last_name")
-  plan             String          @default("STARTER")
-  resetToken       String?         @map("reset_token")
-  resetTokenExpires DateTime?      @map("reset_token_expires")
-  createdAt        DateTime        @default(now()) @map("created_at")
-  updatedAt        DateTime        @updatedAt @map("updated_at")
+  id                    String          @id @default(uuid())
+  email                 String          @unique
+  passwordHash          String          @map("password_hash")
+  firstName             String          @map("first_name")
+  lastName              String          @map("last_name")
+  plan                  String          @default("STARTER")
+  role                  String          @default("user")
+  resetToken            String?         @map("reset_token")
+  resetTokenExpires     DateTime?       @map("reset_token_expires")
+  stripeCustomerId      String?         @map("stripe_customer_id")
+  stripeSubscriptionId  String?         @map("stripe_subscription_id")
+  trialEndsAt           DateTime?       @map("trial_ends_at")
+  minutesUsedThisPeriod Int             @default(0) @map("minutes_used_this_period")
+  billingPeriodStart    DateTime?       @map("billing_period_start")
+  createdAt             DateTime        @default(now()) @map("created_at")
+  updatedAt             DateTime        @updatedAt @map("updated_at")
 
-  virtualNumbers   VirtualNumber[]
-  callLogs         CallLog[]
-  auditLogs        AuditLog[]
+  virtualNumbers        VirtualNumber[]
+  callLogs              CallLog[]
+  auditLogs             AuditLog[]
+  refreshTokens         RefreshToken[]
+  apiKeys               ApiKey[]
+  smsLogs               SmsLog[]
 
   @@map("users")
 }
@@ -40,6 +49,8 @@ model VirtualNumber {
   voicemailGreeting String?       @map("voicemail_greeting")
   ivrEnabled        Boolean       @default(false) @map("ivr_enabled")
   ivrFlow           String?       @map("ivr_flow")
+  providerSid       String?       @map("provider_sid")
+  provider          String        @default("mock")
   createdAt         DateTime      @default(now()) @map("created_at")
   updatedAt         DateTime      @updatedAt @map("updated_at")
   deletedAt         DateTime?     @map("deleted_at")
@@ -47,6 +58,7 @@ model VirtualNumber {
   user              User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   routingRules      RoutingRule[]
   callLogs          CallLog[]
+  smsLogs           SmsLog[]
 
   @@index([userId, deletedAt])
   @@map("virtual_numbers")
@@ -87,6 +99,9 @@ model CallLog {
   forwardedTo     String?       @map("forwarded_to")
   status          String        @default("COMPLETED")
   duration        Int?
+  recordingUrl    String?       @map("recording_url")
+  voicemailUrl    String?       @map("voicemail_url")
+  transcription   String?
   routingRuleId   String?       @map("routing_rule_id")
   startedAt       DateTime      @default(now()) @map("started_at")
   endedAt         DateTime?     @map("ended_at")
@@ -113,4 +128,53 @@ model AuditLog {
   @@index([userId, createdAt])
   @@index([entityType, entityId])
   @@map("audit_logs")
+}
+
+model RefreshToken {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  token     String   @unique
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("refresh_tokens")
+}
+
+model ApiKey {
+  id        String    @id @default(uuid())
+  userId    String    @map("user_id")
+  name      String
+  keyHash   String    @unique @map("key_hash")
+  prefix    String
+  lastUsed  DateTime? @map("last_used")
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("api_keys")
+}
+
+model SmsLog {
+  id              String        @id @default(uuid())
+  virtualNumberId String        @map("virtual_number_id")
+  userId          String        @map("user_id")
+  direction       String        @default("INBOUND")
+  fromNumber      String        @map("from_number")
+  toNumber        String        @map("to_number")
+  body            String
+  status          String        @default("RECEIVED")
+  providerSid     String?       @map("provider_sid")
+  mediaUrls       String?       @map("media_urls")
+  createdAt       DateTime      @default(now()) @map("created_at")
+
+  virtualNumber   VirtualNumber @relation(fields: [virtualNumberId], references: [id])
+  user            User          @relation(fields: [userId], references: [id])
+
+  @@index([userId, createdAt])
+  @@index([virtualNumberId])
+  @@map("sms_logs")
 }
