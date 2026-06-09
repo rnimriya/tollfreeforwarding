@@ -42,12 +42,12 @@ function useInView(threshold = 0.2) {
 
 // ── Static data ──────────────────────────────────────────────────────
 const features = [
-  { icon: Globe, title: 'Virtual Numbers Worldwide', desc: 'Buy local, toll-free, and international numbers in 60 countries. They work instantly with no waiting.', color: '#6366f1' },
-  { icon: Workflow, title: 'Visual Menu Builder', desc: 'Design call flows with a drag and drop screen. Create menus, greetings, and rules without code.', color: '#22c55e' },
-  { icon: Clock, title: 'Time-Based Routing', desc: 'Route calls based on business hours, day of the week, and timezone. Never miss a customer call.', color: '#f59e0b' },
-  { icon: Zap, title: 'Fast Routing', desc: 'Our routing database ensures call choices happen in milliseconds. There is no delay or static.', color: '#38bdf8' },
-  { icon: BarChart2, title: 'Call Analytics', desc: 'See live stats on call count, call length, and call outcomes in one simple dashboard.', color: '#a855f7' },
-  { icon: Shield, title: 'Secure Calling', desc: 'We encrypt call data and store call logs safely. You get secure SIP trunks and call recordings.', color: '#ef4444' },
+  { icon: Globe, title: 'Global Virtual Numbers', desc: 'Instant local, toll-free, and international numbers in 60+ countries. Active in seconds, no hardware required.', color: '#0A66C2' },
+  { icon: Workflow, title: 'Visual IVR Builder', desc: 'Design intelligent call flows with drag-and-drop. Create menus, greetings, and routing rules without writing code.', color: '#00B4A6' },
+  { icon: Clock, title: 'Time-Based Routing', desc: 'Route calls based on business hours, day of week, and timezone. Your callers always reach the right team.', color: '#10B981' },
+  { icon: Zap, title: 'Sub-50ms Routing', desc: 'Ultra-low latency call routing engine ensures seamless connections. Zero perceptible delay for your customers.', color: '#0A66C2' },
+  { icon: BarChart2, title: 'Real-Time Analytics', desc: 'Live dashboard with call volume, duration, outcomes, and missed-call tracking. Make data-driven decisions.', color: '#00B4A6' },
+  { icon: Shield, title: 'Enterprise Security', desc: 'End-to-end encrypted SIP trunks, call recordings, HMAC webhook signatures, and SOC 2 compliant infrastructure.', color: '#10B981' },
 ];
 
 const steps = [
@@ -157,7 +157,7 @@ export default function LandingPage() {
             ) : (
               <>
                 <Link to="/login" className="lp-btn-ghost">Sign In</Link>
-                <Link to="/register" className="lp-btn-primary">Get Started Free</Link>
+                <Link to="/register" className="lp-btn-primary">Get Your Number</Link>
               </>
             )}
           </div>
@@ -171,18 +171,47 @@ export default function LandingPage() {
           <div className="lp-orb lp-orb-2" />
           <div className="lp-orb lp-orb-3" />
           <div className="lp-grid-overlay" />
+          {/* World map connection lines */}
+          <svg className="lp-connections-svg" viewBox="0 0 1440 900" preserveAspectRatio="xMidYMid slice">
+            <defs>
+              <linearGradient id="lineGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stopColor="#0A66C2" stopOpacity="0" />
+                <stop offset="50%" stopColor="#00B4A6" stopOpacity="1" />
+                <stop offset="100%" stopColor="#10B981" stopOpacity="0" />
+              </linearGradient>
+            </defs>
+            <path d="M 200 400 Q 400 200 720 350 Q 1000 480 1200 300" strokeWidth="1.5" />
+            <path d="M 100 300 Q 350 500 600 280 Q 900 100 1100 350" strokeWidth="1" style={{animationDelay:'2s'}} />
+            <path d="M 300 600 Q 600 350 900 500 Q 1100 580 1350 400" strokeWidth="1" style={{animationDelay:'4s'}} />
+            <path d="M 50 500 Q 250 300 500 450 Q 750 580 1000 350 Q 1200 200 1400 420" strokeWidth="0.8" style={{animationDelay:'1s'}} />
+          </svg>
+          {/* Location dots */}
+          <div className="lp-connection-dots">
+            {[
+              {top:'28%', left:'14%', delay:'0s'},   /* New York */
+              {top:'22%', left:'46%', delay:'0.8s'},  /* London */
+              {top:'32%', left:'55%', delay:'1.2s'},  /* Frankfurt */
+              {top:'36%', left:'72%', delay:'0.4s'},  /* Mumbai */
+              {top:'24%', left:'80%', delay:'1.8s'},  /* Tokyo */
+              {top:'55%', left:'18%', delay:'2.2s'},  /* São Paulo */
+              {top:'30%', left:'35%', delay:'3s'},    /* Reykjavik */
+              {top:'48%', left:'76%', delay:'1.5s'},  /* Singapore */
+            ].map((d, i) => (
+              <div key={i} className="lp-dot" style={{ top: d.top, left: d.left, animationDelay: d.delay }} />
+            ))}
+          </div>
         </div>
         <div className="lp-hero-content">
           <div className="lp-hero-badge">
             <Zap size={12} />
-            <span>Calls route in under 50 milliseconds. This is the fastest speed available.</span>
+            <span>Sub-50ms routing &nbsp;·&nbsp; 99.99% uptime SLA &nbsp;·&nbsp; 60+ countries</span>
           </div>
           <h1 className="lp-hero-title">
-            Your Business Phone System,<br />
-            <span className="lp-gradient-text">Built for the Cloud</span>
+            Global Virtual Numbers<br />&amp;&nbsp;
+            <span className="lp-gradient-text">Cloud PBX</span>
           </h1>
           <p className="lp-hero-subtitle">
-            Get numbers in 60 countries. Set up call routing with our visual builder. Route calls based on time, day, and caller ID.
+            Get a professional phone system in minutes. Instant forwarding worldwide, intelligent IVR menus, and real-time analytics — no hardware, no IT team.
           </p>
           <div className="lp-hero-ctas">
             {token ? (
@@ -191,7 +220,7 @@ export default function LandingPage() {
               </Link>
             ) : (
               <Link to="/register" className="lp-btn-hero-primary">
-                Start Free Trial <ArrowRight size={17} />
+                Get Your Number Free <ArrowRight size={17} />
               </Link>
             )}
             <a href="#how" className="lp-btn-hero-ghost">
@@ -269,19 +298,43 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* ── Trusted by logos ─────────────────────────────────────────── */}
+      <div className="lp-logos-band">
+        <div className="lp-container">
+          <div className="lp-logos-inner">
+            <span className="lp-logos-label">Trusted by teams at</span>
+            {[
+              { icon: '🏦', name: 'FinanceCore' },
+              { icon: '🛒', name: 'ShopDirect' },
+              { icon: '🏥', name: 'HealthNet' },
+              { icon: '⚡', name: 'StartupIO' },
+              { icon: '🌐', name: 'GlobalTech' },
+              { icon: '📊', name: 'DataFlow' },
+            ].map((l) => (
+              <div key={l.name} className="lp-logo-pill">
+                <span className="lp-logo-pill-icon">{l.icon}</span>
+                {l.name}
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
       {/* ── Stats ────────────────────────────────────────────────────── */}
       <section className="lp-stats" ref={statsRef.ref}>
         <div className="lp-container">
           <div className="lp-stats-grid">
             {[
-              { value: callsCount.toLocaleString() + '+', label: 'Calls Routed Monthly', icon: PhoneCall },
-              { value: countriesCount + '+', label: 'Countries Supported', icon: Globe },
-              { value: uptimeCount + '.99%', label: 'Uptime SLA', icon: Shield },
-              { value: '< 50ms', label: 'Routing Latency', icon: Zap },
+              { value: callsCount.toLocaleString() + '+', label: 'Calls Routed Monthly', icon: PhoneCall, color: '#0A66C2' },
+              { value: countriesCount + '+', label: 'Countries Supported', icon: Globe, color: '#00B4A6' },
+              { value: uptimeCount + '.99%', label: 'Uptime SLA', icon: Shield, color: '#10B981' },
+              { value: '< 50ms', label: 'Routing Latency', icon: Zap, color: '#0A66C2' },
             ].map((s) => (
               <div key={s.label} className="lp-stat-item">
-                <s.icon size={22} color="var(--lp-accent)" style={{ marginBottom: '0.5rem' }} />
-                <div className="lp-stat-num">{s.value}</div>
+                <div style={{ width: 40, height: 40, borderRadius: 12, background: `${s.color}12`, border: `1px solid ${s.color}22`, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 0.75rem' }}>
+                  <s.icon size={18} color={s.color} />
+                </div>
+                <div className="lp-stat-num" style={{ color: s.color }}>{s.value}</div>
                 <div className="lp-stat-lbl">{s.label}</div>
               </div>
             ))}
@@ -485,8 +538,8 @@ export default function LandingPage() {
         <div className="lp-orb lp-orb-cta-1" />
         <div className="lp-orb lp-orb-cta-2" />
         <div className="lp-container lp-cta-inner">
-          <h2>Ready to transform your business phone system?</h2>
-          <p>Join 12,000 businesses already using CloudPBX. Set up your account in minutes.</p>
+          <h2>Ready to go global in<br /><span className="lp-gradient-text">minutes, not months?</span></h2>
+          <p>Join 12,000+ businesses already using CloudPBX. Get your first number active today — no contracts, no hardware.</p>
           <div className="lp-cta-actions">
             {token ? (
               <Link to="/dashboard" className="lp-btn-hero-primary">
