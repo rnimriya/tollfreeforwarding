@@ -6,14 +6,13 @@ import { requireAuth } from '../lib/auth.js';
 const router = Router();
 router.use(requireAuth);
 
-const user = (req: Request) => (req as any).user;
-
-// GET /api/numbers
+// GET /api/numbers?page=&limit=
 router.get(
   '/',
   asyncHandler(async (req: Request, res: Response) => {
-    const userId = user(req).userId;
-    const numbers = await NumberService.listNumbers(userId);
+    const page = Number(req.query.page) || 1;
+    const limit = Number(req.query.limit) || 50;
+    const numbers = await NumberService.listNumbers(req.user!.userId, page, limit);
     return res.json(numbers);
   })
 );
@@ -22,8 +21,7 @@ router.get(
 router.get(
   '/:id',
   asyncHandler(async (req: Request, res: Response) => {
-    const userId = user(req).userId;
-    const vn = await NumberService.getNumberDetails(req.params.id, userId);
+    const vn = await NumberService.getNumberDetails(req.params.id, req.user!.userId);
     return res.json(vn);
   })
 );
@@ -32,8 +30,7 @@ router.get(
 router.post(
   '/',
   asyncHandler(async (req: Request, res: Response) => {
-    const userId = user(req).userId;
-    const vn = await NumberService.provisionNumber(userId, req.body);
+    const vn = await NumberService.provisionNumber(req.user!.userId, req.body);
     return res.status(201).json(vn);
   })
 );
@@ -42,8 +39,7 @@ router.post(
 router.patch(
   '/:id',
   asyncHandler(async (req: Request, res: Response) => {
-    const userId = user(req).userId;
-    const updated = await NumberService.updateNumberSettings(req.params.id, userId, req.body);
+    const updated = await NumberService.updateNumberSettings(req.params.id, req.user!.userId, req.body);
     return res.json(updated);
   })
 );
@@ -52,8 +48,7 @@ router.patch(
 router.delete(
   '/:id',
   asyncHandler(async (req: Request, res: Response) => {
-    const userId = user(req).userId;
-    const result = await NumberService.deleteNumber(req.params.id, userId);
+    const result = await NumberService.deleteNumber(req.params.id, req.user!.userId);
     return res.json(result);
   })
 );

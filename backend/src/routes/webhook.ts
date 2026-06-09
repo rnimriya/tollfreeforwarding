@@ -1,4 +1,5 @@
 import { Router, Request, Response } from 'express';
+import { createHmac, timingSafeEqual } from 'crypto';
 import { prisma } from '../lib/prisma.js';
 import { cache } from '../lib/cache.js';
 import { DateTime } from 'luxon';
@@ -37,7 +38,7 @@ async function resolveConfig(e164: string): Promise<CachedConfig | null> {
 
   const vn = await prisma.virtualNumber.findUnique({
     where: { e164Number: e164 },
-    include: { routingRules: { orderBy: { priority: 'asc' } } },
+    include: { routingRules: { where: { deletedAt: null }, orderBy: { priority: 'asc' } } },
   });
 
   if (!vn || vn.status !== 'ACTIVE') return null;
@@ -103,12 +104,21 @@ function isRuleActive(rule: CachedConfig['routingRules'][number], now: DateTime)
   return checkShift(now) || checkShift(now.minus({ days: 1 }));
 }
 
+function escapeXml(str: string): string {
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&apos;');
+}
+
 // Generate Twilio/Plivo TwiML responses
 function buildXml(action: string, rule: CachedConfig['routingRules'][number] | null, config: CachedConfig): string {
   const docHeader = '<?xml version="1.0" encoding="UTF-8"?>';
 
   if (!rule) {
-    const greeting = config.voicemailGreeting || 'Please leave a message after the tone.';
+    const greeting = escapeXml(config.voicemailGreeting || 'Please leave a message after the tone.');
     return `${docHeader}
 <Response>
   <Say voice="Polly.Joanna" language="en-US">${greeting}</Say>
@@ -121,7 +131,7 @@ function buildXml(action: string, rule: CachedConfig['routingRules'][number] | n
     case 'RING_GROUP': {
       const dests = rule.destinations.slice().sort((a: any, b: any) => a.order - b.order);
       if (rule.ringStrategy === 'SIMULTANEOUS') {
-        const numbers = dests.map((d: any) => `  <Number>${d.value}</Number>`).join('\n');
+        const numbers = dests.map((d: any) => `  <Number>${escapeXml(String(d.value))}</Number>`).join('\n');
         return `${docHeader}
 <Response>
   <Dial timeout="${rule.ringTimeout}">\n${numbers}
@@ -129,7 +139,7 @@ function buildXml(action: string, rule: CachedConfig['routingRules'][number] | n
 </Response>`;
       }
       // SEQUENTIAL dial first destination
-      const dest = dests[0]?.value || '';
+      const dest = escapeXml(String(dests[0]?.value || ''));
       return `${docHeader}
 <Response>
   <Dial timeout="${rule.ringTimeout}">${dest}</Dial>
@@ -140,12 +150,12 @@ function buildXml(action: string, rule: CachedConfig['routingRules'][number] | n
       return `${docHeader}
 <Response>
   <Dial>
-    <Sip>${rule.sipUri}</Sip>
+    <Sip>${escapeXml(String(rule.sipUri || ''))}</Sip>
   </Dial>
 </Response>`;
 
     case 'VOICEMAIL': {
-      const greeting = config.voicemailGreeting || 'Please leave a message after the tone.';
+      const greeting = escapeXml(config.voicemailGreeting || 'Please leave a message after the tone.');
       return `${docHeader}
 <Response>
   <Say voice="Polly.Joanna">${greeting}</Say>
@@ -168,14 +178,28 @@ function buildXml(action: string, rule: CachedConfig['routingRules'][number] | n
   }
 }
 
-// Verify webhook signature (header checks placeholder)
+// HMAC-SHA256 signature verification
+// Caller must send: x-cpbx-signature = HMAC-SHA256(WEBHOOK_SECRET, To + From + CallSid)
 function verifyWebhookSignature(req: Request): boolean {
-  const signature = req.headers['x-cpbx-signature'];
-  // In production, enforce that signatures exist
-  if (process.env.NODE_ENV === 'production' && !signature) {
+  const secret = process.env.WEBHOOK_SECRET;
+  if (!secret) {
+    // Skip verification only in dev when no secret is configured
+    return process.env.NODE_ENV !== 'production';
+  }
+
+  const signature = req.headers['x-cpbx-signature'] as string | undefined;
+  if (!signature) return false;
+
+  const to: string = req.body?.To || req.body?.to || '';
+  const from: string = req.body?.From || req.body?.from || '';
+  const sid: string = req.body?.CallSid || req.body?.call_uuid || '';
+  const expected = createHmac('sha256', secret).update(`${to}${from}${sid}`).digest('hex');
+
+  try {
+    return timingSafeEqual(Buffer.from(signature), Buffer.from(expected));
+  } catch {
     return false;
   }
-  return true;
 }
 
 // POST /webhook/inbound - Twilio / Plivo triggers this

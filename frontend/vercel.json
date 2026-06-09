@@ -4,15 +4,15 @@
   "rewrites": [
     {
       "source": "/api/:path*",
-      "destination": "https://tollfreeforwarding-backend.vercel.app/api/:path*"
+      "destination": "$BACKEND_URL/api/:path*"
     },
     {
       "source": "/webhook/:path*",
-      "destination": "https://tollfreeforwarding-backend.vercel.app/webhook/:path*"
+      "destination": "$BACKEND_URL/webhook/:path*"
     },
     {
       "source": "/health",
-      "destination": "https://tollfreeforwarding-backend.vercel.app/health"
+      "destination": "$BACKEND_URL/health"
     },
     {
       "source": "/(.*)",

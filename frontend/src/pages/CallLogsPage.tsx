@@ -2,20 +2,9 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Phone, Clock, RefreshCw, Zap } from 'lucide-react';
 import api from '../lib/api';
+import { fmtDuration, CALL_STATUS_CLASS } from '../lib/format';
 import { format } from 'date-fns';
 import toast from 'react-hot-toast';
-
-const STATUS_CLASS: Record<string, string> = {
-  COMPLETED: 'success', NO_ANSWER: 'warning', VOICEMAIL: 'accent',
-  FAILED: 'danger', INITIATED: 'info', IN_PROGRESS: 'info',
-};
-
-function fmtDuration(s: number | null) {
-  if (!s) return '-';
-  const m = Math.floor(s / 60);
-  const sec = s % 60;
-  return m > 0 ? `${m}m ${sec}s` : `${sec}s`;
-}
 
 export default function CallLogsPage() {
   const qc = useQueryClient();
@@ -98,7 +87,7 @@ export default function CallLogsPage() {
                     <td style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '0.82rem', color: 'var(--text-secondary)' }}>
                       {log.forwardedTo || '-'}
                     </td>
-                    <td><span className={`badge badge-${STATUS_CLASS[log.status] || 'muted'}`}>{log.status.replace('_', ' ')}</span></td>
+                    <td><span className={`badge badge-${CALL_STATUS_CLASS[log.status] ?? 'muted'}`}>{log.status.replace('_', ' ')}</span></td>
                     <td style={{ fontFamily: 'monospace', fontSize: '0.82rem' }}>
                       <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
                         <Clock size={11} color="var(--text-muted)" />

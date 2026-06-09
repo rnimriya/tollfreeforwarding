@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import api from '../lib/api';
+import { tokenStorage } from '../lib/tokenStorage';
 
 interface User {
   id: string;
@@ -22,25 +23,26 @@ export const useAuth = create<AuthState>()(
   persist(
     (set) => ({
       user: null,
-      token: null,
+      token: tokenStorage.get(), // hydrate from dedicated storage on init
 
       login: async (email, password) => {
         const { data } = await api.post('/auth/login', { email, password });
-        localStorage.setItem('token', data.token);
+        tokenStorage.set(data.token);
         set({ user: data.user, token: data.token });
       },
 
       register: async (formData) => {
         const { data } = await api.post('/auth/register', formData);
-        localStorage.setItem('token', data.token);
+        tokenStorage.set(data.token);
         set({ user: data.user, token: data.token });
       },
 
       logout: () => {
-        localStorage.removeItem('token');
+        tokenStorage.clear();
         set({ user: null, token: null });
       },
     }),
-    { name: 'auth', partialize: (s) => ({ user: s.user, token: s.token }) }
+    // Persist user profile only — token lives in tokenStorage (single source of truth)
+    { name: 'auth', partialize: (s) => ({ user: s.user }) }
   )
 );

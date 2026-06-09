@@ -1,11 +1,25 @@
 import jwt from 'jsonwebtoken';
 import { Request, Response, NextFunction } from 'express';
 
+if (process.env.NODE_ENV === 'production' && !process.env.JWT_SECRET) {
+  console.error('FATAL: JWT_SECRET must be set in production');
+  process.exit(1);
+}
+
 const SECRET = process.env.JWT_SECRET || 'dev-secret';
 
 export interface AuthPayload {
   userId: string;
   email: string;
+}
+
+// Augment the Express Request type so every route file gets req.user typed
+declare global {
+  namespace Express {
+    interface Request {
+      user?: AuthPayload;
+    }
+  }
 }
 
 export function signToken(payload: AuthPayload): string {
@@ -18,13 +32,12 @@ export function verifyToken(token: string): AuthPayload {
 
 export function requireAuth(req: Request, res: Response, next: NextFunction): void {
   const header = req.headers.authorization;
-  if (!header || !header.startsWith('Bearer ')) {
+  if (!header?.startsWith('Bearer ')) {
     res.status(401).json({ error: 'Missing token' });
     return;
   }
   try {
-    const payload = verifyToken(header.slice(7));
-    (req as any).user = payload;
+    req.user = verifyToken(header.slice(7));
     next();
   } catch {
     res.status(401).json({ error: 'Invalid token' });

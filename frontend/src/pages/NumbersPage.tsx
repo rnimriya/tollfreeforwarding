@@ -22,16 +22,22 @@ const TIMEZONES = [
   'Europe/Paris','Europe/Berlin','Asia/Tokyo','Asia/Singapore','Australia/Sydney',
 ];
 
+const STATUS_COLOR: Record<string, string> = {
+  ACTIVE: 'success', SUSPENDED: 'warning', PENDING: 'info', RELEASED: 'muted',
+};
+
 export default function NumbersPage() {
   const navigate = useNavigate();
   const qc = useQueryClient();
   const [showModal, setShowModal] = useState(false);
   const [form, setForm] = useState({ friendlyName: '', numberType: 'LOCAL', timezone: 'America/New_York' });
 
-  const { data: numbers = [], isLoading } = useQuery<VirtualNumber[]>({
+  const { data, isLoading } = useQuery<{ total: number; data: VirtualNumber[] }>({
     queryKey: ['numbers'],
     queryFn: () => api.get('/numbers').then((r) => r.data),
   });
+
+  const numbers = data?.data ?? [];
 
   const createMutation = useMutation({
     mutationFn: () => api.post('/numbers', form),
@@ -41,7 +47,7 @@ export default function NumbersPage() {
       toast.success('Virtual number provisioned!');
       setForm({ friendlyName: '', numberType: 'LOCAL', timezone: 'America/New_York' });
     },
-    onError: () => toast.error('Failed to create number'),
+    onError: (err: any) => toast.error(err?.response?.data?.error || 'Failed to create number'),
   });
 
   const deleteMutation = useMutation({
@@ -50,16 +56,17 @@ export default function NumbersPage() {
       qc.invalidateQueries({ queryKey: ['numbers'] });
       toast.success('Number released');
     },
+    onError: (err: any) => toast.error(err?.response?.data?.error || 'Failed to release number'),
   });
-
-  const statusColor = (s: string) => ({ ACTIVE: 'success', SUSPENDED: 'warning', PENDING: 'info', RELEASED: 'muted' }[s] || 'muted');
 
   return (
     <div className="page">
       <div className="page-header">
         <div>
           <h1 className="page-title">Virtual Numbers</h1>
-          <p className="page-subtitle">Manage your phone numbers, routing rules, and IVR flows</p>
+          <p className="page-subtitle">
+            {data ? `${data.total} number${data.total !== 1 ? 's' : ''}` : 'Manage your phone numbers, routing rules, and IVR flows'}
+          </p>
         </div>
         <button className="btn btn-primary" onClick={() => setShowModal(true)}>
           <Plus size={16} /> Provision Number
@@ -89,7 +96,7 @@ export default function NumbersPage() {
               <div style={{ flex: 1 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.25rem' }}>
                   <span className="number-e164">{num.e164Number}</span>
-                  <span className={`badge badge-${statusColor(num.status)}`}>{num.status}</span>
+                  <span className={`badge badge-${STATUS_COLOR[num.status] ?? 'muted'}`}>{num.status}</span>
                   <span className="badge badge-muted">{num.numberType}</span>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
@@ -108,7 +115,10 @@ export default function NumbersPage() {
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                 <button
                   className="btn btn-danger btn-sm"
-                  onClick={(e) => { e.stopPropagation(); if (confirm('Release this number?')) deleteMutation.mutate(num.id); }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (confirm('Release this number? This cannot be undone.')) deleteMutation.mutate(num.id);
+                  }}
                 >
                   <Trash2 size={13} />
                 </button>
@@ -128,7 +138,12 @@ export default function NumbersPage() {
             </div>
             <div className="form-group">
               <label>Friendly Name</label>
-              <input className="input" placeholder="e.g. Sales Line" value={form.friendlyName} onChange={(e) => setForm((f) => ({ ...f, friendlyName: e.target.value }))} />
+              <input
+                className="input"
+                placeholder="e.g. Sales Line"
+                value={form.friendlyName}
+                onChange={(e) => setForm((f) => ({ ...f, friendlyName: e.target.value }))}
+              />
             </div>
             <div className="form-row">
               <div className="form-group">

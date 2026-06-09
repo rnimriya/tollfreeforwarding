@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
 import { Phone, TrendingUp, Clock, Activity, ArrowUpRight, ArrowDownRight } from 'lucide-react';
 import api from '../lib/api';
+import { fmtDurationShort } from '../lib/format';
 import { format, parseISO } from 'date-fns';
 
 interface Stats {
@@ -20,13 +21,6 @@ const STATUS_COLORS: Record<string, string> = {
   VOICEMAIL: '#6366f1',
   FAILED: '#ef4444',
 };
-
-function fmtDuration(s: number) {
-  if (!s) return '0s';
-  const m = Math.floor(s / 60);
-  const sec = s % 60;
-  return m > 0 ? `${m}m ${sec}s` : `${sec}s`;
-}
 
 export default function DashboardPage() {
   const { data: stats, isLoading } = useQuery<Stats>({
@@ -105,7 +99,7 @@ export default function DashboardPage() {
             </div>
             <span className="badge badge-info">Avg</span>
           </div>
-          <div className="stat-value">{fmtDuration(stats?.avgDuration ?? 0)}</div>
+          <div className="stat-value">{fmtDurationShort(stats?.avgDuration ?? 0)}</div>
           <div className="stat-label">Avg Call Duration</div>
         </div>
 

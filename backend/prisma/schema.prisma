@@ -23,6 +23,7 @@ model User {
 
   virtualNumbers   VirtualNumber[]
   callLogs         CallLog[]
+  auditLogs        AuditLog[]
 
   @@map("users")
 }
@@ -41,11 +42,13 @@ model VirtualNumber {
   ivrFlow           String?       @map("ivr_flow")
   createdAt         DateTime      @default(now()) @map("created_at")
   updatedAt         DateTime      @updatedAt @map("updated_at")
+  deletedAt         DateTime?     @map("deleted_at")
 
   user              User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   routingRules      RoutingRule[]
   callLogs          CallLog[]
 
+  @@index([userId, deletedAt])
   @@map("virtual_numbers")
 }
 
@@ -65,9 +68,11 @@ model RoutingRule {
   ivrNodeKey      String?       @map("ivr_node_key")
   createdAt       DateTime      @default(now()) @map("created_at")
   updatedAt       DateTime      @updatedAt @map("updated_at")
+  deletedAt       DateTime?     @map("deleted_at")
 
   virtualNumber   VirtualNumber @relation(fields: [virtualNumberId], references: [id], onDelete: Cascade)
 
+  @@index([virtualNumberId, deletedAt])
   @@map("routing_rules")
 }
 
@@ -89,5 +94,23 @@ model CallLog {
   virtualNumber   VirtualNumber @relation(fields: [virtualNumberId], references: [id])
   user            User          @relation(fields: [userId], references: [id])
 
+  @@index([userId, startedAt])
+  @@index([virtualNumberId])
   @@map("call_logs")
+}
+
+model AuditLog {
+  id         String   @id @default(uuid())
+  userId     String   @map("user_id")
+  action     String
+  entityType String   @map("entity_type")
+  entityId   String   @map("entity_id")
+  changes    String?
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([entityType, entityId])
+  @@map("audit_logs")
 }

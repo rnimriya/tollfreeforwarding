@@ -7,27 +7,15 @@ interface ThemeState {
   setTheme: (theme: 'dark' | 'light') => void;
 }
 
+// DOM sync is handled by a single useEffect in App.tsx.
+// The store holds state only — no side effects here.
 export const useTheme = create<ThemeState>()(
   persist(
     (set) => ({
       theme: 'dark',
-      toggleTheme: () => set((state) => {
-        const next = state.theme === 'dark' ? 'light' : 'dark';
-        document.documentElement.setAttribute('data-theme', next);
-        return { theme: next };
-      }),
-      setTheme: (theme) => {
-        document.documentElement.setAttribute('data-theme', theme);
-        set({ theme });
-      },
+      toggleTheme: () => set((s) => ({ theme: s.theme === 'dark' ? 'light' : 'dark' })),
+      setTheme: (theme) => set({ theme }),
     }),
-    {
-      name: 'theme',
-      onRehydrateStorage: () => (state) => {
-        if (state) {
-          document.documentElement.setAttribute('data-theme', state.theme);
-        }
-      },
-    }
+    { name: 'theme' }
   )
 );

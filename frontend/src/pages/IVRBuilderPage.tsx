@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
@@ -150,34 +150,41 @@ export default function IVRBuilderPage() {
     queryFn: () => api.get(`/numbers/${id}`).then((r) => r.data),
   });
 
-  // Load saved flow or start with a welcome node
-  const initFlow = (savedFlow: any) => {
-    if (savedFlow?.nodes?.length) {
-      return {
-        nodes: savedFlow.nodes,
-        edges: savedFlow.edges || [],
-      };
-    }
-    return {
-      nodes: [
-        {
-          id: 'root',
-          type: 'ivr',
-          position: { x: 250, y: 80 },
-          data: { kind: 'greeting', label: 'Welcome', prompt: 'Thank you for calling. How can we help you?' },
-        },
-      ],
-      edges: [],
-    };
-  };
-
-  const savedFlow = vn?.ivrFlow ? JSON.parse(vn.ivrFlow) : null;
-  const init = initFlow(savedFlow);
-
-  const [nodes, setNodes, onNodesChange] = useNodesState(init.nodes);
-  const [edges, setEdges, onEdgesChange] = useEdgesState(init.edges);
+  // useNodesState/useEdgesState only consume their argument once (like useState).
+  // vn loads asynchronously, so we start with a placeholder and sync via useEffect.
+  const [nodes, setNodes, onNodesChange] = useNodesState([
+    {
+      id: 'root',
+      type: 'ivr',
+      position: { x: 250, y: 80 },
+      data: { kind: 'greeting', label: 'Welcome', prompt: 'Thank you for calling. How can we help you?' },
+    },
+  ]);
+  const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
   const [selectedNode, setSelectedNode] = useState<Node | null>(null);
   const [isDirty, setIsDirty] = useState(false);
+
+  // Tracks whether we have already seeded from the server — prevents overwriting
+  // the user's in-progress edits if the query re-fetches.
+  const flowSeededRef = useRef(false);
+
+  useEffect(() => {
+    if (!vn || flowSeededRef.current) return;
+    flowSeededRef.current = true;
+
+    if (vn.ivrFlow) {
+      try {
+        const flow = JSON.parse(vn.ivrFlow);
+        if (flow?.nodes?.length) {
+          setNodes(flow.nodes);
+          setEdges(flow.edges ?? []);
+        }
+      } catch {
+        console.error('[IVR] Saved flow is corrupted — starting fresh');
+      }
+    }
+    setIsDirty(false);
+  }, [vn, setNodes, setEdges]);
 
   const onConnect = useCallback((params: Connection) => {
     setEdges((eds) => addEdge({ ...params, animated: true, style: { stroke: 'var(--accent)', strokeWidth: 2 } }, eds));

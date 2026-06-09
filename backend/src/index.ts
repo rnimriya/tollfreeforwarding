@@ -10,29 +10,37 @@ import webhookRouter from './routes/webhook.js';
 import dashboardRouter from './routes/dashboard.js';
 import { errorHandler } from './lib/errorHandler.js';
 
-// Trigger Vercel redeployment
 const app = express();
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT || 3009;
+
+// Required for express-rate-limit to see real client IPs behind Vercel/nginx reverse proxy.
+// Without this, all requests appear to come from the proxy IP and share one rate-limit bucket.
+app.set('trust proxy', 1);
 
 const allowedOrigins = process.env.ALLOWED_ORIGINS
-  ? process.env.ALLOWED_ORIGINS.split(',')
+  ? process.env.ALLOWED_ORIGINS.split(',').map((o) => o.trim())
   : ['http://localhost:5173'];
+
+// When set, only Vercel preview URLs whose hostname starts with this prefix are allowed.
+// e.g. VERCEL_APP_PREFIX=tollfreeforwarding-frontend permits
+//      tollfreeforwarding-frontend-*.vercel.app but blocks random-app.vercel.app
+const vercelPrefix = process.env.VERCEL_APP_PREFIX;
 
 app.use(
   cors({
     origin: (origin, callback) => {
-      // Allow if no origin (e.g., mobile apps, curl) or if it's in the allowedOrigins list.
       if (!origin || allowedOrigins.includes(origin)) {
         return callback(null, true);
       }
-      
-      // Dynamically allow same-origin requests or Vercel preview/production deployments.
-      try {
-        const url = new URL(origin);
-        if (url.hostname.endsWith('.vercel.app')) {
-          return callback(null, true);
-        }
-      } catch (_) {}
+
+      if (vercelPrefix) {
+        try {
+          const { hostname } = new URL(origin);
+          if (hostname === `${vercelPrefix}.vercel.app` || hostname.startsWith(`${vercelPrefix}-`)) {
+            return callback(null, true);
+          }
+        } catch (_) {}
+      }
 
       callback(new Error('Not allowed by CORS'));
     },

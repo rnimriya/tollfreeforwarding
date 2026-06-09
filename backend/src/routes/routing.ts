@@ -6,14 +6,11 @@ import { requireAuth } from '../lib/auth.js';
 const router = Router();
 router.use(requireAuth);
 
-const user = (req: Request) => (req as any).user;
-
 // GET /api/routing/:numberId
 router.get(
   '/:numberId',
   asyncHandler(async (req: Request, res: Response) => {
-    const userId = user(req).userId;
-    const rules = await RoutingService.listRules(req.params.numberId, userId);
+    const rules = await RoutingService.listRules(req.params.numberId, req.user!.userId);
     return res.json(rules);
   })
 );
@@ -22,8 +19,7 @@ router.get(
 router.post(
   '/:numberId',
   asyncHandler(async (req: Request, res: Response) => {
-    const userId = user(req).userId;
-    const rule = await RoutingService.createRule(req.params.numberId, userId, req.body);
+    const rule = await RoutingService.createRule(req.params.numberId, req.user!.userId, req.body);
     return res.status(201).json(rule);
   })
 );
@@ -32,8 +28,12 @@ router.post(
 router.patch(
   '/:numberId/:ruleId',
   asyncHandler(async (req: Request, res: Response) => {
-    const userId = user(req).userId;
-    const updated = await RoutingService.updateRule(req.params.numberId, req.params.ruleId, userId, req.body);
+    const updated = await RoutingService.updateRule(
+      req.params.numberId,
+      req.params.ruleId,
+      req.user!.userId,
+      req.body
+    );
     return res.json(updated);
   })
 );
@@ -42,8 +42,11 @@ router.patch(
 router.delete(
   '/:numberId/:ruleId',
   asyncHandler(async (req: Request, res: Response) => {
-    const userId = user(req).userId;
-    const result = await RoutingService.deleteRule(req.params.numberId, req.params.ruleId, userId);
+    const result = await RoutingService.deleteRule(
+      req.params.numberId,
+      req.params.ruleId,
+      req.user!.userId
+    );
     return res.json(result);
   })
 );

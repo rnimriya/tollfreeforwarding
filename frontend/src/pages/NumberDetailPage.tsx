@@ -3,11 +3,12 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft, Plus, Trash2, Edit2, Workflow, Phone, Clock, Globe } from 'lucide-react';
 import api from '../lib/api';
+import { ACTION_COLOR } from '../lib/format';
 import toast from 'react-hot-toast';
 
 const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 const ACTIONS = ['FORWARD_PSTN', 'FORWARD_SIP', 'RING_GROUP', 'VOICEMAIL', 'REJECT'];
-const STRATEGIES = ['SEQUENTIAL', 'SIMULTANEOUS', 'ROUND_ROBIN'];
+const STRATEGIES = ['SEQUENTIAL', 'SIMULTANEOUS'];
 
 function emptyRule() {
   return {
@@ -83,7 +84,7 @@ export default function NumberDetailPage() {
     }));
   };
 
-  const actionColor = (a: string) => ({ FORWARD_PSTN: 'success', FORWARD_SIP: 'info', RING_GROUP: 'accent', VOICEMAIL: 'warning', REJECT: 'danger' }[a] || 'muted');
+  const actionColor = (a: string) => ACTION_COLOR[a] ?? 'muted';
 
   if (isLoading) {
     return <div className="loading-page"><div className="spinner" style={{ width: 28, height: 28 }} /></div>;
