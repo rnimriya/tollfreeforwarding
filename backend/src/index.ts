@@ -8,6 +8,7 @@ import routingRouter from './routes/routing.js';
 import logsRouter from './routes/logs.js';
 import webhookRouter from './routes/webhook.js';
 import dashboardRouter from './routes/dashboard.js';
+import { errorHandler } from './lib/errorHandler.js';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -49,6 +50,8 @@ app.use('/api/numbers', numbersRouter);
 app.use('/api/routing', routingRouter);
 app.use('/api/logs', logsRouter);
 app.use('/api/dashboard', dashboardRouter);
+
+app.use(errorHandler);
 
 app.get('/', (_req, res) => res.json({ message: 'CloudPBX API is running' }));
 app.get('/health', (_req, res) => res.json({ status: 'ok', ts: new Date().toISOString() }));

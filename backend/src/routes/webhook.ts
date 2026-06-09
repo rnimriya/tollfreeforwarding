@@ -2,6 +2,8 @@ import { Router, Request, Response } from 'express';
 import { prisma } from '../lib/prisma.js';
 import { cache } from '../lib/cache.js';
 import { DateTime } from 'luxon';
+import { asyncHandler } from '../lib/asyncHandler.js';
+import { ApiError } from '../lib/apiError.js';
 
 const router = Router();
 
@@ -27,6 +29,7 @@ interface CachedConfig {
   }>;
 }
 
+// Invalidate & load cache helper
 async function resolveConfig(e164: string): Promise<CachedConfig | null> {
   const key = `num:${e164}`;
   const cached = cache.get<CachedConfig>(key);
@@ -65,6 +68,7 @@ async function resolveConfig(e164: string): Promise<CachedConfig | null> {
   return config;
 }
 
+// Audit active schedules
 function isRuleActive(rule: CachedConfig['routingRules'][number], now: DateTime): boolean {
   const isoWeekday = now.weekday; // 1=Mon … 7=Sun
   if (rule.activeDays.length > 0 && !rule.activeDays.includes(isoWeekday)) return false;
@@ -86,10 +90,13 @@ function isRuleActive(rule: CachedConfig['routingRules'][number], now: DateTime)
   return true;
 }
 
+// Generate Twilio/Plivo TwiML responses
 function buildXml(action: string, rule: CachedConfig['routingRules'][number] | null, config: CachedConfig): string {
+  const docHeader = '<?xml version="1.0" encoding="UTF-8"?>';
+
   if (!rule) {
     const greeting = config.voicemailGreeting || 'Please leave a message after the tone.';
-    return `<?xml version="1.0" encoding="UTF-8"?>
+    return `${docHeader}
 <Response>
   <Say voice="Polly.Joanna" language="en-US">${greeting}</Say>
   <Record maxLength="120" playBeep="true" />
@@ -102,22 +109,22 @@ function buildXml(action: string, rule: CachedConfig['routingRules'][number] | n
       const dests = rule.destinations.slice().sort((a: any, b: any) => a.order - b.order);
       if (rule.ringStrategy === 'SIMULTANEOUS') {
         const numbers = dests.map((d: any) => `  <Number>${d.value}</Number>`).join('\n');
-        return `<?xml version="1.0" encoding="UTF-8"?>
+        return `${docHeader}
 <Response>
   <Dial timeout="${rule.ringTimeout}">\n${numbers}
   </Dial>
 </Response>`;
       }
-      // SEQUENTIAL - first destination
+      // SEQUENTIAL dial first destination
       const dest = dests[0]?.value || '';
-      return `<?xml version="1.0" encoding="UTF-8"?>
+      return `${docHeader}
 <Response>
   <Dial timeout="${rule.ringTimeout}">${dest}</Dial>
 </Response>`;
     }
 
     case 'FORWARD_SIP':
-      return `<?xml version="1.0" encoding="UTF-8"?>
+      return `${docHeader}
 <Response>
   <Dial>
     <Sip>${rule.sipUri}</Sip>
@@ -126,7 +133,7 @@ function buildXml(action: string, rule: CachedConfig['routingRules'][number] | n
 
     case 'VOICEMAIL': {
       const greeting = config.voicemailGreeting || 'Please leave a message after the tone.';
-      return `<?xml version="1.0" encoding="UTF-8"?>
+      return `${docHeader}
 <Response>
   <Say voice="Polly.Joanna">${greeting}</Say>
   <Record maxLength="120" playBeep="true" />
@@ -134,13 +141,13 @@ function buildXml(action: string, rule: CachedConfig['routingRules'][number] | n
     }
 
     case 'REJECT':
-      return `<?xml version="1.0" encoding="UTF-8"?>
+      return `${docHeader}
 <Response>
   <Reject reason="busy"/>
 </Response>`;
 
     default:
-      return `<?xml version="1.0" encoding="UTF-8"?>
+      return `${docHeader}
 <Response>
   <Say>Thank you for calling. Goodbye.</Say>
   <Hangup/>
@@ -148,16 +155,31 @@ function buildXml(action: string, rule: CachedConfig['routingRules'][number] | n
   }
 }
 
-// POST /webhook/inbound - Twilio / Plivo hits this
-router.post('/inbound', async (req: Request, res: Response) => {
-  const t0 = Date.now();
+// Verify webhook signature (header checks placeholder)
+function verifyWebhookSignature(req: Request): boolean {
+  const signature = req.headers['x-cpbx-signature'];
+  // In production, enforce that signatures exist
+  if (process.env.NODE_ENV === 'production' && !signature) {
+    return false;
+  }
+  return true;
+}
 
-  // Twilio field: req.body.To | Plivo field: req.body.To
-  const calledNumber: string = req.body.To || req.body.to || '';
-  const callerNumber: string = req.body.From || req.body.from || 'unknown';
-  const callSid: string = req.body.CallSid || req.body.call_uuid || '';
+// POST /webhook/inbound - Twilio / Plivo triggers this
+router.post(
+  '/inbound',
+  asyncHandler(async (req: Request, res: Response) => {
+    const t0 = Date.now();
 
-  try {
+    // Verify callback origin
+    if (!verifyWebhookSignature(req)) {
+      throw ApiError.unauthorized('Invalid callback signature audit checks');
+    }
+
+    const calledNumber: string = req.body.To || req.body.to || '';
+    const callerNumber: string = req.body.From || req.body.from || 'unknown';
+    const callSid: string = req.body.CallSid || req.body.call_uuid || '';
+
     const config = await resolveConfig(calledNumber);
 
     if (!config) {
@@ -172,12 +194,15 @@ router.post('/inbound', async (req: Request, res: Response) => {
     const nowInTz = DateTime.now().setZone(config.timezone);
     let matchedRule: CachedConfig['routingRules'][number] | null = null;
     for (const rule of config.routingRules) {
-      if (isRuleActive(rule, nowInTz)) { matchedRule = rule; break; }
+      if (isRuleActive(rule, nowInTz)) {
+        matchedRule = rule;
+        break;
+      }
     }
 
     const xml = buildXml(matchedRule?.action || 'VOICEMAIL', matchedRule, config);
 
-    // Fire-and-forget log write
+    // Fire-and-forget log write to prevent thread blocking
     setImmediate(async () => {
       await prisma.callLog.create({
         data: {
@@ -191,40 +216,48 @@ router.post('/inbound', async (req: Request, res: Response) => {
           routingRuleId: matchedRule?.id ?? null,
           direction: 'INBOUND',
         },
-      }).catch(() => {});
+      }).catch((e) => {
+        console.error('[webhook-logs] Failed to create call log:', e);
+      });
     });
 
     console.log(`[webhook] ${calledNumber} ← ${callerNumber} | rule=${matchedRule?.id ?? 'none'} | ${Date.now() - t0}ms`);
     return res.status(200).type('text/xml').send(xml);
-  } catch (err) {
-    console.error('[webhook] error:', err);
-    const xml = `<?xml version="1.0" encoding="UTF-8"?><Response><Say>System error.</Say><Hangup/></Response>`;
-    return res.status(200).type('text/xml').send(xml);
-  }
-});
+  })
+);
 
-// GET /webhook/inbound - simulate from browser for testing
-router.get('/inbound', async (req: Request, res: Response) => {
-  const to = req.query.to as string;
-  const from = req.query.from as string || '+15550001234';
-  if (!to) return res.status(400).json({ error: 'Pass ?to=+1xxxxxxxxxx' });
+// GET /webhook/inbound - Browser query test simulation
+router.get(
+  '/inbound',
+  asyncHandler(async (req: Request, res: Response) => {
+    const to = req.query.to as string;
+    const from = (req.query.from as string) || '+15550001234';
+    if (!to) {
+      throw ApiError.badRequest('Pass ?to=+1xxxxxxxxxx parameters');
+    }
 
-  const config = await resolveConfig(to);
-  if (!config) return res.json({ error: 'Number not found or inactive' });
+    const config = await resolveConfig(to);
+    if (!config) {
+      throw ApiError.notFound('Virtual number not found or inactive');
+    }
 
-  const nowInTz = DateTime.now().setZone(config.timezone);
-  let matchedRule: CachedConfig['routingRules'][number] | null = null;
-  for (const rule of config.routingRules) {
-    if (isRuleActive(rule, nowInTz)) { matchedRule = rule; break; }
-  }
+    const nowInTz = DateTime.now().setZone(config.timezone);
+    let matchedRule: CachedConfig['routingRules'][number] | null = null;
+    for (const rule of config.routingRules) {
+      if (isRuleActive(rule, nowInTz)) {
+        matchedRule = rule;
+        break;
+      }
+    }
 
-  return res.json({
-    number: to,
-    timezone: config.timezone,
-    localTime: nowInTz.toFormat('yyyy-MM-dd HH:mm:ss ZZZZ'),
-    matchedRule: matchedRule ? { id: matchedRule.id, action: matchedRule.action, priority: matchedRule.priority } : null,
-    twiml: buildXml(matchedRule?.action || 'VOICEMAIL', matchedRule, config),
-  });
-});
+    return res.json({
+      number: to,
+      timezone: config.timezone,
+      localTime: nowInTz.toFormat('yyyy-MM-dd HH:mm:ss ZZZZ'),
+      matchedRule: matchedRule ? { id: matchedRule.id, action: matchedRule.action, priority: matchedRule.priority } : null,
+      twiml: buildXml(matchedRule?.action || 'VOICEMAIL', matchedRule, config),
+    });
+  })
+);
 
 export default router;
