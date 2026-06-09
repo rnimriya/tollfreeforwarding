@@ -9,7 +9,9 @@ async function seed() {
   const hash = await bcrypt.hash('password123', 10);
   const user = await prisma.user.upsert({
     where: { email: 'demo@example.com' },
-    update: {},
+    update: {
+      passwordHash: hash,
+    },
     create: {
       email: 'demo@example.com',
       passwordHash: hash,

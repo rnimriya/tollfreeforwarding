@@ -10,7 +10,9 @@ async function seed() {
   
   const admin = await prisma.user.upsert({
     where: { email: 'admin@example.com' },
-    update: {},
+    update: {
+      passwordHash: hash,
+    },
     create: {
       email: 'admin@example.com',
       passwordHash: hash,
@@ -23,7 +25,9 @@ async function seed() {
 
   const agent = await prisma.user.upsert({
     where: { email: 'agent@example.com' },
-    update: {},
+    update: {
+      passwordHash: hash,
+    },
     create: {
       email: 'agent@example.com',
       passwordHash: hash,
