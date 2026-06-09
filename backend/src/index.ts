@@ -10,6 +10,7 @@ import webhookRouter from './routes/webhook.js';
 import dashboardRouter from './routes/dashboard.js';
 import { errorHandler } from './lib/errorHandler.js';
 
+// Trigger Vercel redeployment
 const app = express();
 const PORT = process.env.PORT || 3001;
 
