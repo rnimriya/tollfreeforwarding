@@ -5,7 +5,8 @@ import {
   ChevronRight, Check, Star, ArrowRight, Play,
   Clock, Users, TrendingUp, Headphones, Layers, RefreshCw,
   PhoneCall, MapPin, Mail, Twitter, Github, Linkedin,
-  Sun, Moon
+  Sun, Moon, Volume2, Settings, Plus, Square, CheckCircle2,
+  AlertTriangle, ArrowUpRight, MessageSquare, PlayCircle, Eye
 } from 'lucide-react';
 import { useAuth } from '../stores/authStore';
 import { useTheme } from '../stores/themeStore';
@@ -114,11 +115,129 @@ export default function LandingPage() {
   const [openFaq, setOpenFaq] = useState<number | null>(null);
   const [isScrolled, setIsScrolled] = useState(false);
 
+  // ── Interactive Features States ────────────────────────────────────
+  const [heroTab, setHeroTab] = useState<'simulator' | 'dashboard'>('simulator');
+  const [billingPeriod, setBillingPeriod] = useState<'monthly' | 'annually'>('annually');
+  
+  // Call Simulator state
+  const [simState, setSimState] = useState<'idle' | 'ringing' | 'connected' | 'completed'>('idle');
+  const [simType, setSimType] = useState<'sales' | 'support' | null>(null);
+  const [simStep, setSimStep] = useState(0);
+  const [simDuration, setSimDuration] = useState(0);
+  const [simLogs, setSimLogs] = useState<string[]>([]);
+  const simTimer = useRef<any>(null);
+  const durationInterval = useRef<any>(null);
+
+  // Interactive IVR Spotlight state
+  const [activeIvrNode, setActiveIvrNode] = useState<'greeting' | 'sales' | 'support' | 'voicemail'>('greeting');
+  const [ivrGreetingText, setIvrGreetingText] = useState('Welcome to our sales and support hotline. Please listen carefully.');
+  const [ivrSalesDest, setIvrSalesDest] = useState('+1 (800) 555-0199');
+  const [ivrSupportDest, setIvrSupportDest] = useState('sip:support@cloudpbx.sip.us');
+  const [ivrVoicemailTimeout, setIvrVoicemailTimeout] = useState(15);
+  const [ivrTesting, setIvrTesting] = useState(false);
+  const [ivrTestProgress, setIvrTestProgress] = useState(0);
+
   useEffect(() => {
     const handler = () => setIsScrolled(window.scrollY > 40);
     window.addEventListener('scroll', handler);
-    return () => window.removeEventListener('scroll', handler);
+    return () => {
+      window.removeEventListener('scroll', handler);
+      if (simTimer.current) clearTimeout(simTimer.current);
+      if (durationInterval.current) clearInterval(durationInterval.current);
+    };
   }, []);
+
+  // ── Call Simulator Logic ───────────────────────────────────────────
+  const startSimulation = (type: 'sales' | 'support') => {
+    if (simTimer.current) clearTimeout(simTimer.current);
+    if (durationInterval.current) clearInterval(durationInterval.current);
+    
+    setSimState('ringing');
+    setSimType(type);
+    setSimStep(1);
+    setSimDuration(0);
+    setSimLogs(['[09:41:00] 📞 Incoming call detected from +1 (312) 555-8291...']);
+    
+    const stepsSales = [
+      { delay: 1800, state: 'connected', step: 2, log: '[09:41:02] ✔️ Call answered. Active routing rules matched [US Toll-Free Line].' },
+      { delay: 3500, state: 'connected', step: 3, log: '[09:41:04] 🕒 Schedule Check: Current time is 14:23. Office open. Routing to IVR Welcome Menu.' },
+      { delay: 6000, state: 'connected', step: 4, log: '[09:41:07] 🎙️ Welcome greeting active. Playing audio: "Welcome to our sales line. Press 1 for Sales..."' },
+      { delay: 8500, state: 'connected', step: 5, log: '[09:41:09] 🎹 Key Input: Caller pressed [1]. Activating rule: Forward to Sales Ring Group.' },
+      { delay: 11000, state: 'connected', step: 6, log: '[09:41:12] 🚀 Dialing Sales agent SIP endpoint: sales_rep_mary@cloudpbx.sip.us...' },
+      { delay: 13000, state: 'completed', step: 7, log: '[09:41:14] 🎉 Call answered by Agent. Session routed in under 12ms. Call resolved.' }
+    ];
+
+    const stepsSupport = [
+      { delay: 1800, state: 'connected', step: 2, log: '[09:41:02] ✔️ Call answered. Active routing rules matched [US Toll-Free Line].' },
+      { delay: 3500, state: 'connected', step: 3, log: '[09:41:04] 🕒 Schedule Check: Current time is 22:15. Office closed. Night routing active.' },
+      { delay: 6000, state: 'connected', step: 5, log: '[09:41:06] ⚠️ Night Mode matched. Routing call directly to Voicemail Box.' },
+      { delay: 8500, state: 'connected', step: 6, log: '[09:41:09] 🎙️ Playing Night Greeting: "We are currently closed. Please leave your message..."' },
+      { delay: 11000, state: 'completed', step: 7, log: '[09:41:11] 📬 Recording complete. Voicemail audio file uploaded to Cloud Storage. Webhook sent.' }
+    ];
+
+    const timeline = type === 'sales' ? stepsSales : stepsSupport;
+    let isTimerStarted = false;
+    
+    let currentLogs = ['[09:41:00] 📞 Incoming call detected from +1 (312) 555-8291...'];
+
+    timeline.forEach((item, index) => {
+      simTimer.current = setTimeout(() => {
+        setSimState(item.state as any);
+        setSimStep(item.step);
+        currentLogs.push(item.log);
+        setSimLogs([...currentLogs]);
+        
+        if (item.state === 'connected' && !isTimerStarted) {
+          isTimerStarted = true;
+          durationInterval.current = setInterval(() => {
+            setSimDuration(d => d + 1);
+          }, 1000);
+        }
+        
+        if (item.state === 'completed') {
+          if (durationInterval.current) clearInterval(durationInterval.current);
+        }
+      }, item.delay);
+    });
+  };
+
+  const stopSimulation = () => {
+    if (simTimer.current) clearTimeout(simTimer.current);
+    if (durationInterval.current) clearInterval(durationInterval.current);
+    setSimState('idle');
+    setSimType(null);
+    setSimStep(0);
+    setSimDuration(0);
+    setSimLogs([]);
+  };
+
+  // Format Duration
+  const formatTime = (secs: number) => {
+    const m = Math.floor(secs / 60);
+    const s = secs % 60;
+    return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+  };
+
+  // ── Interactive IVR Test Flow Logic ───────────────────────────────
+  const startIvrTest = () => {
+    if (ivrTesting) return;
+    setIvrTesting(true);
+    setIvrTestProgress(1); // Starting at greeting
+
+    setTimeout(() => {
+      setIvrTestProgress(2); // Menu
+      setTimeout(() => {
+        setIvrTestProgress(3); // Branches
+        setTimeout(() => {
+          setIvrTestProgress(4); // Forward
+          setTimeout(() => {
+            setIvrTesting(false);
+            setIvrTestProgress(0);
+          }, 1500);
+        }, 1500);
+      }, 1500);
+    }, 1500);
+  };
 
   return (
     <div className="landing">
@@ -149,6 +268,7 @@ export default function LandingPage() {
                 color: 'var(--lp-text)',
                 cursor: 'pointer'
               }}
+              aria-label="Toggle theme"
             >
               {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
             </button>
@@ -201,17 +321,18 @@ export default function LandingPage() {
             ))}
           </div>
         </div>
+        
         <div className="lp-hero-content">
           <div className="lp-hero-badge">
             <Zap size={12} />
-            <span>Sub-50ms routing &nbsp;·&nbsp; 99.99% uptime SLA &nbsp;·&nbsp; 60+ countries</span>
+            <span>Interactive Telephony Platform &nbsp;·&nbsp; Live Sim Demo</span>
           </div>
           <h1 className="lp-hero-title">
             Global Virtual Numbers<br />&amp;&nbsp;
             <span className="lp-gradient-text">Cloud PBX</span>
           </h1>
           <p className="lp-hero-subtitle">
-            Get a professional phone system in minutes. Instant forwarding worldwide, intelligent IVR menus, and real-time analytics — no hardware, no IT team.
+            Instantly provision business lines in 60+ countries. Configure schedule checks, custom greetings, and IVR menu routing in seconds, then test them live below.
           </p>
           <div className="lp-hero-ctas">
             {token ? (
@@ -224,7 +345,6 @@ export default function LandingPage() {
               </Link>
             )}
             <a href="#how" className="lp-btn-hero-ghost">
-              <span className="lp-play-btn"><Play size={12} fill="white" /></span>
               See how it works
             </a>
           </div>
@@ -236,65 +356,256 @@ export default function LandingPage() {
             </div>
             <div>
               <div className="lp-trust-stars">{'★★★★★'}</div>
-              <div className="lp-trust-text">Trusted by 12,000 businesses.</div>
+              <div className="lp-trust-text">Trusted by 12,000 businesses worldwide.</div>
             </div>
           </div>
         </div>
 
-        {/* Dashboard preview mockup */}
+        {/* ── Interactive Demo & Dashboard Mockup Section ───────────────── */}
         <div className="lp-hero-mockup">
-          <div className="lp-mockup-card">
-            <div className="lp-mockup-header">
-              <div className="lp-mockup-dots">
-                <span style={{background:'#ef4444'}} /><span style={{background:'#f59e0b'}} /><span style={{background:'#22c55e'}} />
-              </div>
-              <div className="lp-mockup-title">CloudPBX Dashboard</div>
-            </div>
-            <div className="lp-mockup-body">
-              <div className="lp-mockup-stats">
-                {[
-                  { label: 'Active Numbers', value: '12', delta: '+3', color: '#6366f1' },
-                  { label: 'Calls Today', value: '284', delta: '+12%', color: '#22c55e' },
-                  { label: 'Avg Duration', value: '4m 22s', delta: '↑', color: '#38bdf8' },
-                ].map((s) => (
-                  <div key={s.label} className="lp-mock-stat">
-                    <div className="lp-mock-stat-val" style={{ color: s.color }}>{s.value}</div>
-                    <div className="lp-mock-stat-label">{s.label}</div>
-                    <div className="lp-mock-stat-delta" style={{ color: s.color }}>{s.delta}</div>
+          <div className="lp-mockup-tabs">
+            <button 
+              className={`lp-tab-btn ${heroTab === 'simulator' ? 'active' : ''}`}
+              onClick={() => { setHeroTab('simulator'); stopSimulation(); }}
+            >
+              <PhoneCall size={14} /> Interactive Call Simulator
+            </button>
+            <button 
+              className={`lp-tab-btn ${heroTab === 'dashboard' ? 'active' : ''}`}
+              onClick={() => { setHeroTab('dashboard'); stopSimulation(); }}
+            >
+              <Eye size={14} /> Dashboard Live Preview
+            </button>
+          </div>
+
+          {heroTab === 'simulator' ? (
+            <div className="lp-simulator-wrapper">
+              {/* Virtual Phone Casing */}
+              <div className="lp-phone-case">
+                <div className="lp-phone-speaker" />
+                <div className="lp-phone-camera" />
+                
+                <div className="lp-phone-screen">
+                  {/* Status Bar */}
+                  <div className="lp-phone-status">
+                    <span className="lp-phone-time">09:41</span>
+                    <span className="lp-phone-signals">📶 📳 🔋</span>
                   </div>
-                ))}
-              </div>
-              <div className="lp-mock-chart">
-                {[40,65,45,80,60,90,75,85,70,95,80,100].map((h, i) => (
-                  <div key={i} className="lp-mock-bar" style={{ height: `${h}%`, animationDelay: `${i * 0.08}s` }} />
-                ))}
-              </div>
-              <div className="lp-mock-numbers">
-                {[
-                  { num: '+1 (800) 555-0100', name: 'Sales Line', status: 'ACTIVE' },
-                  { num: '+1 (415) 555-0199', name: 'Support', status: 'ACTIVE' },
-                  { num: '+44 20 7123 4567', name: 'UK Office', status: 'ACTIVE' },
-                ].map((n) => (
-                  <div key={n.num} className="lp-mock-num-row">
-                    <div className="lp-mock-num-dot" />
-                    <div style={{ flex: 1 }}>
-                      <div style={{ fontSize: '0.72rem', fontWeight: 600, fontFamily: 'JetBrains Mono, monospace' }}>{n.num}</div>
-                      <div style={{ fontSize: '0.62rem', color: 'var(--lp-muted)' }}>{n.name}</div>
+
+                  {simState === 'idle' && (
+                    <div className="lp-phone-screen-content lp-phone-idle">
+                      <div className="lp-phone-wallpaper-glow" />
+                      <div className="lp-phone-brand">CloudPBX Demo</div>
+                      <div className="lp-phone-helper">Simulate an incoming call to see how your automated rules trigger in real-time.</div>
+                      
+                      <div className="lp-phone-actions">
+                        <button className="lp-sim-start-btn sales" onClick={() => startSimulation('sales')}>
+                          <Play size={12} fill="currentColor" /> Simulate Sales Call
+                        </button>
+                        <button className="lp-sim-start-btn support" onClick={() => startSimulation('support')}>
+                          <Play size={12} fill="currentColor" /> Simulate Night Call
+                        </button>
+                      </div>
                     </div>
-                    <div className="lp-mock-badge">{n.status}</div>
+                  )}
+
+                  {simState === 'ringing' && (
+                    <div className="lp-phone-screen-content lp-phone-ringing">
+                      <div className="lp-phone-caller-info">
+                        <div className="lp-caller-avatar">👤</div>
+                        <div className="lp-caller-name">Inbound Call</div>
+                        <div className="lp-caller-number">+1 (312) 555-8291</div>
+                        <div className="lp-caller-city">Chicago, IL</div>
+                      </div>
+                      
+                      <div className="lp-phone-ring-actions">
+                        <button className="lp-decline-call" onClick={stopSimulation}>
+                          <Phone size={18} style={{ transform: 'rotate(135deg)' }} />
+                          <span>Decline</span>
+                        </button>
+                        <button className="lp-answer-call" onClick={() => setSimState('connected')}>
+                          <Phone size={18} />
+                          <span>Answer</span>
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {simState === 'connected' && (
+                    <div className="lp-phone-screen-content lp-phone-connected">
+                      <div className="lp-phone-caller-info small">
+                        <div className="lp-caller-number">+1 (312) 555-8291</div>
+                        <div className="lp-call-duration">{formatTime(simDuration)}</div>
+                        <div className="lp-call-state-tag">
+                          {simStep <= 3 && "Connecting..."}
+                          {simStep === 4 && "Playing IVR Greeting..."}
+                          {simStep === 5 && "Routing..."}
+                          {simStep === 6 && "Forwarding..."}
+                        </div>
+                      </div>
+
+                      {/* Sound wave visualizer */}
+                      <div className="lp-audio-wave">
+                        <span className="lp-wave-bar bar-1" />
+                        <span className="lp-wave-bar bar-2" />
+                        <span className="lp-wave-bar bar-3" />
+                        <span className="lp-wave-bar bar-4" />
+                        <span className="lp-wave-bar bar-5" />
+                      </div>
+
+                      <div className="lp-live-dialog">
+                        {simStep === 4 && <div className="lp-speech-bubble">"Welcome! Press 1 for Sales..."</div>}
+                        {simStep === 5 && <div className="lp-speech-bubble font-mono">Input: DTMF [1]</div>}
+                        {simStep === 6 && <div className="lp-speech-bubble">"Connecting to Mary..."</div>}
+                      </div>
+
+                      <div className="lp-phone-connected-actions">
+                        <button className="lp-hangup-call" onClick={stopSimulation}>
+                          <Phone size={18} style={{ transform: 'rotate(135deg)' }} />
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {simState === 'completed' && (
+                    <div className="lp-phone-screen-content lp-phone-completed">
+                      <div className="lp-completed-icon">✔</div>
+                      <div className="lp-completed-title">Call Completed</div>
+                      <div className="lp-completed-details">
+                        <span>Duration: {formatTime(simDuration)}</span>
+                        <span>Type: {simType === 'sales' ? 'Sales Inbound' : 'Support Voicemail'}</span>
+                      </div>
+                      <button className="lp-sim-reset" onClick={stopSimulation}>
+                        Restart Simulator
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Dynamic routing rules graph viz */}
+              <div className="lp-simulator-diagram">
+                <h4>LIVE ROUTING RULE PROGRESSION</h4>
+                
+                <div className="lp-sim-nodes">
+                  <div className={`lp-sim-node ${simStep >= 1 ? 'active' : ''}`}>
+                    <div className="lp-node-bullet">1</div>
+                    <div className="lp-node-label">
+                      <span>Inbound Number</span>
+                      <small>+1 (800) 555-0100</small>
+                    </div>
                   </div>
-                ))}
+                  
+                  <div className={`lp-sim-node ${simStep >= 2 ? 'active' : ''}`}>
+                    <div className="lp-node-bullet">2</div>
+                    <div className="lp-node-label">
+                      <span>Schedule Filter</span>
+                      <small>{simType === 'support' ? 'Closed (Night)' : 'Open (Day)'}</small>
+                    </div>
+                  </div>
+
+                  {simType !== 'support' ? (
+                    <>
+                      <div className={`lp-sim-node ${simStep >= 4 ? 'active' : ''}`}>
+                        <div className="lp-node-bullet">3</div>
+                        <div className="lp-node-label">
+                          <span>IVR Welcome Greeting</span>
+                          <small>TTS Node</small>
+                        </div>
+                      </div>
+                      <div className={`lp-sim-node ${simStep >= 5 ? 'active' : ''}`}>
+                        <div className="lp-node-bullet">4</div>
+                        <div className="lp-node-label">
+                          <span>Dial Pad Key Router</span>
+                          <small>Pressed: 1 (Sales)</small>
+                        </div>
+                      </div>
+                      <div className={`lp-sim-node ${simStep >= 6 ? 'active' : ''}`}>
+                        <div className="lp-node-bullet">5</div>
+                        <div className="lp-node-label">
+                          <span>Destination: SIP Trunk</span>
+                          <small>Ringing Sales Agent</small>
+                        </div>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div className={`lp-sim-node ${simStep >= 5 ? 'active' : ''}`}>
+                        <div className="lp-node-bullet">3</div>
+                        <div className="lp-node-label">
+                          <span>Route: Voicemail Greeting</span>
+                          <small>Night Office Greeting</small>
+                        </div>
+                      </div>
+                      <div className={`lp-sim-node ${simStep >= 6 ? 'active' : ''}`}>
+                        <div className="lp-node-bullet">4</div>
+                        <div className="lp-node-label">
+                          <span>R2 Storage Voicemail</span>
+                          <small>Recording audio.wav...</small>
+                        </div>
+                      </div>
+                    </>
+                  )}
+                </div>
+
+                {/* Console Logs */}
+                <div className="lp-sim-logs">
+                  <div className="lp-logs-header">System Logs</div>
+                  <div className="lp-logs-content">
+                    {simLogs.map((log, i) => (
+                      <div key={i} className="lp-log-entry">{log}</div>
+                    ))}
+                    {simLogs.length === 0 && <div className="lp-log-placeholder">Launch a simulation to read active routing logs...</div>}
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
-          <div className="lp-mockup-float lp-mockup-float-1">
-            <PhoneCall size={14} color="#22c55e" />
-            <span>Call routed in <b>12ms</b></span>
-          </div>
-          <div className="lp-mockup-float lp-mockup-float-2">
-            <Globe size={14} color="#6366f1" />
-            <span><b>+44</b> London → Support</span>
-          </div>
+          ) : (
+            <div className="lp-mockup-card">
+              <div className="lp-mockup-header">
+                <div className="lp-mockup-dots">
+                  <span style={{background:'#ef4444'}} /><span style={{background:'#f59e0b'}} /><span style={{background:'#22c55e'}} />
+                </div>
+                <div className="lp-mockup-title">CloudPBX Dashboard</div>
+              </div>
+              <div className="lp-mockup-body">
+                <div className="lp-mockup-stats">
+                  {[
+                    { label: 'Active Numbers', value: '12', delta: '+3', color: '#6366f1' },
+                    { label: 'Calls Today', value: '284', delta: '+12%', color: '#22c55e' },
+                    { label: 'Avg Duration', value: '4m 22s', delta: '↑', color: '#38bdf8' },
+                  ].map((s) => (
+                    <div key={s.label} className="lp-mock-stat">
+                      <div className="lp-mock-stat-val" style={{ color: s.color }}>{s.value}</div>
+                      <div className="lp-mock-stat-label">{s.label}</div>
+                      <div className="lp-mock-stat-delta" style={{ color: s.color }}>{s.delta}</div>
+                    </div>
+                  ))}
+                </div>
+                <div className="lp-mock-chart">
+                  {[40,65,45,80,60,90,75,85,70,95,80,100].map((h, i) => (
+                    <div key={i} className="lp-mock-bar" style={{ height: `${h}%`, animationDelay: `${i * 0.08}s` }} />
+                  ))}
+                </div>
+                <div className="lp-mock-numbers">
+                  {[
+                    { num: '+1 (800) 555-0100', name: 'Sales Line', status: 'ACTIVE' },
+                    { num: '+1 (415) 555-0199', name: 'Support', status: 'ACTIVE' },
+                    { num: '+44 20 7123 4567', name: 'UK Office', status: 'ACTIVE' },
+                  ].map((n) => (
+                    <div key={n.num} className="lp-mock-num-row">
+                      <div className="lp-mock-num-dot" />
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontSize: '0.72rem', fontWeight: 600, fontFamily: 'JetBrains Mono, monospace' }}>{n.num}</div>
+                        <div style={{ fontSize: '0.62rem', color: 'var(--lp-muted)' }}>{n.name}</div>
+                      </div>
+                      <div className="lp-mock-badge">{n.status}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </section>
 
@@ -370,46 +681,148 @@ export default function LandingPage() {
           <div className="lp-spotlight-text">
             <div className="lp-section-badge">Visual IVR Builder</div>
             <h2>Design call flows without writing code</h2>
-            <p>Our builder lets you create custom routing rules. Add greetings, menus, and forwarding. Publish changes with one click.</p>
-            <ul className="lp-spotlight-list">
-              {['Six node types including greetings and menus', 'Preview your flow and publish with one click', 'Set options for dial pad buttons', 'Route calls based on business hours'].map((item) => (
-                <li key={item}><Check size={15} color="var(--lp-accent)" /><span>{item}</span></li>
-              ))}
-            </ul>
-            <Link to="/register" className="lp-btn-primary" style={{ marginTop: '1.5rem', display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}>
-              Try IVR Builder Free <ChevronRight size={16} />
-            </Link>
+            <p>Click on any node in the diagram to configure properties. Witness how changes affect the call path flow instantly.</p>
+            
+            {/* Interactive Node Editor Card */}
+            <div className="lp-node-properties-card">
+              <div className="lp-properties-header">
+                <Settings size={14} /> Properties Editor: <strong>{activeIvrNode.toUpperCase()} Node</strong>
+              </div>
+              
+              <div className="lp-properties-body">
+                {activeIvrNode === 'greeting' && (
+                  <div className="lp-property-field">
+                    <label>Welcome Greeting Text</label>
+                    <textarea 
+                      value={ivrGreetingText} 
+                      onChange={(e) => setIvrGreetingText(e.target.value)}
+                      placeholder="Type welcome speech..."
+                    />
+                    <small>Text is automatically synthesized to audio via Google Cloud Text-To-Speech.</small>
+                  </div>
+                )}
+                {activeIvrNode === 'sales' && (
+                  <div className="lp-property-field">
+                    <label>Forward destination (Sales)</label>
+                    <input 
+                      type="text" 
+                      value={ivrSalesDest} 
+                      onChange={(e) => setIvrSalesDest(e.target.value)} 
+                    />
+                    <small>Real-time PSTN forwarding destination.</small>
+                  </div>
+                )}
+                {activeIvrNode === 'support' && (
+                  <div className="lp-property-field">
+                    <label>SIP Endpoint (Support)</label>
+                    <input 
+                      type="text" 
+                      value={ivrSupportDest} 
+                      onChange={(e) => setIvrSupportDest(e.target.value)} 
+                    />
+                    <small>Low-latency secure SIP terminal target.</small>
+                  </div>
+                )}
+                {activeIvrNode === 'voicemail' && (
+                  <div className="lp-property-field">
+                    <label>Maximum Ring Time (Seconds)</label>
+                    <input 
+                      type="number" 
+                      value={ivrVoicemailTimeout} 
+                      onChange={(e) => setIvrVoicemailTimeout(parseInt(e.target.value) || 15)} 
+                    />
+                    <small>Time before routing to Voicemail recording box.</small>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', gap: '1rem', marginTop: '1.5rem' }}>
+              <button 
+                onClick={startIvrTest} 
+                disabled={ivrTesting}
+                className="lp-btn-primary" 
+                style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}
+              >
+                {ivrTesting ? 'Simulating flow...' : 'Test IVR Path'} <ChevronRight size={16} />
+              </button>
+              <Link to="/register" className="lp-btn-ghost">
+                Build Full Canvas Free
+              </Link>
+            </div>
           </div>
+
           <div className="lp-ivr-preview">
             <div className="lp-ivr-canvas">
+              {/* Animated Flow Dot */}
+              {ivrTesting && (
+                <div className={`lp-ivr-flow-dot step-${ivrTestProgress}`} />
+              )}
+
               {/* Simulated IVR node graph */}
-              <div className="lp-ivr-node lp-ivr-node--greeting" style={{ top: 20, left: '50%', transform: 'translateX(-50%)' }}>
-                <span>🎙️</span> Welcome Greeting
+              <div 
+                className={`lp-ivr-node lp-ivr-node--greeting clickable ${activeIvrNode === 'greeting' ? 'active-editor' : ''} ${ivrTestProgress === 1 ? 'active-flow' : ''}`}
+                onClick={() => setActiveIvrNode('greeting')}
+              >
+                <span>🎙️</span> 
+                <div className="lp-node-text-wrapper">
+                  <strong>Welcome Greeting</strong>
+                  <p>{ivrGreetingText.length > 35 ? ivrGreetingText.substring(0, 35) + '...' : ivrGreetingText}</p>
+                </div>
               </div>
+              
               <div className="lp-ivr-connector lp-ivr-conn-center" />
-              <div className="lp-ivr-node lp-ivr-node--menu" style={{ top: 110, left: '50%', transform: 'translateX(-50%)' }}>
-                <span>📋</span> IVR Menu
+              
+              <div 
+                className={`lp-ivr-node lp-ivr-node--menu clickable ${ivrTestProgress === 2 ? 'active-flow' : ''}`}
+                onClick={() => setActiveIvrNode('greeting')}
+              >
+                <span>📋</span> IVR Key Router Menu
               </div>
+              
               <div className="lp-ivr-branches">
                 <div className="lp-ivr-branch">
                   <div className="lp-ivr-branch-line" />
                   <div className="lp-ivr-branch-label">Press 1</div>
-                  <div className="lp-ivr-node lp-ivr-node--forward">
-                    <span>📞</span> Sales
+                  <div 
+                    className={`lp-ivr-node lp-ivr-node--forward clickable ${activeIvrNode === 'sales' ? 'active-editor' : ''} ${ivrTestProgress === 4 ? 'active-flow' : ''}`}
+                    onClick={() => setActiveIvrNode('sales')}
+                  >
+                    <span>📞</span> 
+                    <div className="lp-node-text-wrapper">
+                      <strong>Forward Sales</strong>
+                      <p>{ivrSalesDest}</p>
+                    </div>
                   </div>
                 </div>
+                
                 <div className="lp-ivr-branch">
                   <div className="lp-ivr-branch-line" />
                   <div className="lp-ivr-branch-label">Press 2</div>
-                  <div className="lp-ivr-node lp-ivr-node--forward lp-ivr-node--support">
-                    <span>🎧</span> Support
+                  <div 
+                    className={`lp-ivr-node lp-ivr-node--forward lp-ivr-node--support clickable ${activeIvrNode === 'support' ? 'active-editor' : ''}`}
+                    onClick={() => setActiveIvrNode('support')}
+                  >
+                    <span>🎧</span> 
+                    <div className="lp-node-text-wrapper">
+                      <strong>SIP Support</strong>
+                      <p>{ivrSupportDest.length > 22 ? ivrSupportDest.substring(0, 22) + '...' : ivrSupportDest}</p>
+                    </div>
                   </div>
                 </div>
+                
                 <div className="lp-ivr-branch">
                   <div className="lp-ivr-branch-line" />
                   <div className="lp-ivr-branch-label">Timeout</div>
-                  <div className="lp-ivr-node lp-ivr-node--voicemail">
-                    <span>📬</span> Voicemail
+                  <div 
+                    className={`lp-ivr-node lp-ivr-node--voicemail clickable ${activeIvrNode === 'voicemail' ? 'active-editor' : ''}`}
+                    onClick={() => setActiveIvrNode('voicemail')}
+                  >
+                    <span>📬</span> 
+                    <div className="lp-node-text-wrapper">
+                      <strong>Voicemail</strong>
+                      <p>Timeout: {ivrVoicemailTimeout}s</p>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -447,37 +860,66 @@ export default function LandingPage() {
             <div className="lp-section-badge">Pricing</div>
             <h2>Simple, transparent pricing</h2>
             <p>No setup fees, no contracts. Start with a 14-day free trial on any plan.</p>
+            
+            {/* Annually / Monthly Toggle */}
+            <div className="lp-pricing-toggle-wrapper">
+              <span className={billingPeriod === 'monthly' ? 'active-period' : ''}>Monthly</span>
+              <button 
+                className="lp-pricing-toggle-btn" 
+                onClick={() => setBillingPeriod(billingPeriod === 'monthly' ? 'annually' : 'monthly')}
+                aria-label="Toggle billing period"
+              >
+                <span className={`lp-pricing-toggle-thumb ${billingPeriod}`} />
+              </button>
+              <span className={billingPeriod === 'annually' ? 'active-period' : ''}>
+                Annually <span className="lp-discount-badge">Save 20%</span>
+              </span>
+            </div>
           </div>
+          
           <div className="lp-plans">
-            {plans.map((p) => (
-              <div key={p.name} className={`lp-plan${p.highlight ? ' lp-plan--highlight' : ''}`}>
-                {p.highlight && <div className="lp-plan-badge">Most Popular</div>}
-                <div className="lp-plan-header">
-                  <div className="lp-plan-icon" style={{ background: `${p.color}18`, color: p.color }}>
-                    <Layers size={18} />
+            {plans.map((p) => {
+              // Calculate pricing based on billing cycle
+              let activePrice = p.price;
+              if (billingPeriod === 'annually') {
+                if (p.name === 'Starter') activePrice = 15;
+                if (p.name === 'Professional') activePrice = 39;
+                if (p.name === 'Enterprise') activePrice = 119;
+              }
+              
+              return (
+                <div key={p.name} className={`lp-plan${p.highlight ? ' lp-plan--highlight' : ''}`}>
+                  {p.highlight && <div className="lp-plan-badge">Most Popular</div>}
+                  <div className="lp-plan-header">
+                    <div className="lp-plan-icon" style={{ background: `${p.color}18`, color: p.color }}>
+                      <Layers size={18} />
+                    </div>
+                    <div className="lp-plan-name">{p.name}</div>
+                    <div className="lp-plan-desc">{p.desc}</div>
+                    <div className="lp-plan-price">
+                      <span className="lp-plan-currency">$</span>
+                      <span className="lp-plan-amount">{activePrice}</span>
+                      <span className="lp-plan-period">/mo</span>
+                    </div>
+                    {billingPeriod === 'annually' && (
+                      <span className="lp-pricing-billed-annually">Billed annually (${activePrice * 12}/yr)</span>
+                    )}
                   </div>
-                  <div className="lp-plan-name">{p.name}</div>
-                  <div className="lp-plan-desc">{p.desc}</div>
-                  <div className="lp-plan-price">
-                    <span className="lp-plan-currency">$</span>
-                    <span className="lp-plan-amount">{p.price}</span>
-                    <span className="lp-plan-period">{p.period}</span>
-                  </div>
+                  <ul className="lp-plan-features">
+                    {p.features.map((f) => (
+                      <li key={f}><Check size={14} color={p.color} /><span>{f}</span></li>
+                    ))}
+                  </ul>
+                  <Link
+                    to="/register"
+                    className="lp-plan-cta"
+                    style={p.highlight ? { background: p.color, color: '#fff', boxShadow: `0 8px 24px ${p.color}44` } : {}}
+                  >
+                    {p.cta} <ChevronRight size={15} />
+                  </Link>
                 </div>
-                <ul className="lp-plan-features">
-                  {p.features.map((f) => (
-                    <li key={f}><Check size={14} color={p.color} /><span>{f}</span></li>
-                  ))}
-                </ul>
-                <Link
-                  to="/register"
-                  className="lp-plan-cta"
-                  style={p.highlight ? { background: p.color, color: '#fff', boxShadow: `0 8px 24px ${p.color}44` } : {}}
-                >
-                  {p.cta} <ChevronRight size={15} />
-                </Link>
-              </div>
-            ))}
+              );
+            })}
           </div>
           <p className="lp-pricing-note">
             All plans include a 14 day free trial. You do not need a credit card. Cancel anytime.
