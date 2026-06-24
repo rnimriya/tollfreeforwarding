@@ -30,6 +30,9 @@ import StatusPage from './pages/StatusPage';
 import ContactPage from './pages/ContactPage';
 import CommunityPage from './pages/CommunityPage';
 import SLAPage from './pages/SLAPage';
+import PrivacyPolicyPage from './pages/PrivacyPolicyPage';
+import TermsOfServicePage from './pages/TermsOfServicePage';
+import CookiePolicyPage from './pages/CookiePolicyPage';
 
 // Private application pages
 import DashboardPage from './pages/DashboardPage';
@@ -86,6 +89,9 @@ export default function App() {
         <Route path="/contact" element={<ContactPage />} />
         <Route path="/community" element={<CommunityPage />} />
         <Route path="/sla" element={<SLAPage />} />
+        <Route path="/privacy" element={<PrivacyPolicyPage />} />
+        <Route path="/terms" element={<TermsOfServicePage />} />
+        <Route path="/cookies" element={<CookiePolicyPage />} />
       </Route>
 
       {/* Private Application Dashboard routes */}

@@ -209,7 +209,10 @@ export default function MarketingLayout() {
           <div className="lp-footer-bottom">
             <span>© 2026 CloudPBX, Inc. All rights reserved.</span>
             <div className="lp-footer-legal">
-              <Link to="/sla">Privacy & SLA Policy</Link>
+              <Link to="/privacy">Privacy Policy</Link>
+              <Link to="/terms">Terms of Service</Link>
+              <Link to="/cookies">Cookie Policy</Link>
+              <Link to="/sla">SLA</Link>
               <Link to="/contact">Contact</Link>
               <Link to="/links">Directory</Link>
             </div>
